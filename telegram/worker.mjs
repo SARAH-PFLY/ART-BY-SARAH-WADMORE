@@ -4,7 +4,7 @@ function b64(bytes){let s='';for(let i=0;i<bytes.length;i+=8192)s+=String.fromCh
 const encode=text=>b64(new TextEncoder().encode(text));
 async function equal(a,b){const hash=async s=>new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s)));const x=await hash(a),y=await hash(b);return x.reduce((v,n,i)=>v|(n^y[i]),0)===0}
 async function telegram(env,method,body){const r=await fetch('https://api.telegram.org/bot'+env.BOT_TOKEN+'/'+method,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const data=await r.json();if(!r.ok||!data.ok)throw Error('Telegram request failed');return data.result}
-async function gh(env,path,method='GET',body){const r=await fetch('https://api.github.com/repos/'+env.REPO+(path?'/'+path:''),{method,headers:{Authorization:'Bearer '+env.GITHUB_TOKEN,Accept:'application/vnd.github+json','User-Agent':'SarahArtworkUploader','Content-Type':'application/json'},body:body?JSON.stringify(body):undefined});if(!r.ok)throw Error('GitHub '+r.status);return r.json()}
+async function gh(env,path,method='GET',body){const r=await fetch('https://api.github.com/repos/'+env.REPO+(path?'/'+path:''),{method,headers:{Authorization:'Bearer '+env.GITHUB_TOKEN,Accept:'application/vnd.github+json','User-Agent':'SarahArtworkUploader','Content-Type':'application/json'},body:body?JSON.stringify(body):undefined});if(!r.ok)throw Error('GitHub '+r.status+' '+method+' '+path);return r.json()}
 async function handle(update,env){
  const m=update.message;if(!m||m.chat.type!=='private'||String(m.from?.id)!==env.SARAH_USER_ID)return;
  const say=text=>telegram(env,'sendMessage',{chat_id:m.chat.id,text});
@@ -48,5 +48,5 @@ export default {async fetch(request,bindings){
  if(!env.WEBHOOK_SECRET||!env.BOT_TOKEN||!env.GITHUB_TOKEN||!env.SARAH_USER_ID)return new Response('Not configured',{status:503});
  if(!await equal(request.headers.get('X-Telegram-Bot-Api-Secret-Token')||'',env.WEBHOOK_SECRET))return new Response('Forbidden',{status:403});
  if(Number(request.headers.get('content-length')||0)>100000)return new Response('Too large',{status:413});
- try{await handle(await request.json(),env);return new Response('OK')}catch{console.error(JSON.stringify({event:'upload_failed'}));return new Response('Retry later',{status:503})}
+ try{await handle(await request.json(),env);return new Response('OK')}catch(error){console.error(JSON.stringify({event:'upload_failed',code:/^GitHub [0-9]{3} /.test(error.message)?error.message:'processing_error'}));return new Response('Retry later',{status:503})}
 }};
