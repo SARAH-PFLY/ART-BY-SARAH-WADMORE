@@ -43,7 +43,7 @@ async function handle(update,env){
  }
 }
 export default {async fetch(request,bindings){
- const env={...bindings,BOT_TOKEN:bindings.BT_TOKEN||bindings.BOT_TOKEN,GITHUB_TOKEN:bindings.H_TOKEN||bindings.GITHUB_TOKEN};
+ const env={...bindings,BOT_TOKEN:bindings.BotFathertoken||bindings.BT_TOKEN||bindings.BOT_TOKEN,GITHUB_TOKEN:bindings.GitHubtoken||bindings.H_TOKEN||bindings.GITHUB_TOKEN};
  if(new URL(request.url).pathname!=='/telegram'||request.method!=='POST')return new Response('Not found',{status:404});
  if(!env.WEBHOOK_SECRET||!env.BOT_TOKEN||!env.GITHUB_TOKEN||!env.SARAH_USER_ID)return new Response('Not configured',{status:503});
  if(!await equal(request.headers.get('X-Telegram-Bot-Api-Secret-Token')||'',env.WEBHOOK_SECRET))return new Response('Forbidden',{status:403});
