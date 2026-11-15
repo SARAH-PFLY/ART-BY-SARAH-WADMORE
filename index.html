@@ -49,8 +49,8 @@ box.addEventListener('keydown',event=>{if(event.key==='ArrowLeft'){event.prevent
 box.addEventListener('touchstart',event=>{startX=event.changedTouches[0].clientX;startY=event.changedTouches[0].clientY},{passive:true});
 box.addEventListener('touchend',event=>{const dx=event.changedTouches[0].clientX-startX,dy=event.changedTouches[0].clientY-startY;if(Math.abs(dx)>60&&Math.abs(dx)>Math.abs(dy)*1.5)show(current+(dx<0?1:-1))},{passive:true});
 const expand=document.querySelector('#expand');
-if(!box.requestFullscreen)expand.hidden=true;
-expand.onclick=async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await box.requestFullscreen()}catch{expand.hidden=true}};
+if(!document.documentElement.requestFullscreen)expand.hidden=true;
+expand.onclick=async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen()}catch{expand.hidden=true}};
 document.querySelector('#year').textContent=new Date().getFullYear();
 async function init(){try{const response=await fetch('./artworks.json');if(!response.ok)throw Error('Gallery unavailable');const data=await response.json();if(!Array.isArray(data))throw Error('Invalid gallery');works=data.filter(w=>w&&typeof w.src==='string'&&typeof w.title==='string')}catch(error){console.warn(error)}
  if(!works.length)works=Array.from({length:24},(_,i)=>({title:'Demo composition '+String(i+1).padStart(2,'0'),src:placeholder(i),demo:true}));else document.querySelector('#note').textContent='Select an artwork to explore';render()}
