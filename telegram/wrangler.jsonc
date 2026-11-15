@@ -6,10 +6,11 @@
   "observability": {
     "enabled": true,
     "traces": {
-      "enabled": true
+      "enabled": false
     }
   },
   "vars": {
-    "REPO": "SARAH-PFLY/ART-BY-SARAH-WADMORE"
+    "REPO": "SARAH-PFLY/ART-BY-SARAH-WADMORE",
+    "SARAH_USER_ID": "1019741898"
   }
 }
