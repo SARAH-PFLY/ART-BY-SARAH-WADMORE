@@ -1,0 +1,16 @@
+{
+  "name": "sarah-artwork-upload",
+  "main": "worker.mjs",
+  "compatibility_date": "2026-11-15",
+  "workers_dev": true,
+  "observability": {
+    "enabled": true,
+    "traces": {
+      "enabled": false
+    }
+  },
+  "vars": {
+    "REPO": "SARAH-PFLY/ART-BY-SARAH-WADMORE",
+    "SARAH_USER_ID": "1019741898"
+  }
+}
