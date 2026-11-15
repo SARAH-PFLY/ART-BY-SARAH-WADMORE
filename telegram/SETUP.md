@@ -1,5 +1,9 @@
 # Telegram artwork uploads
 
+Bot: @sarahs_artbot. Authorized Telegram user ID: 1019741898 (configured in wrangler.jsonc).
+
+Automatic traces are disabled because Telegram API paths contain the bot token. Keep traces disabled in the Cloudflare dashboard too. Logs must never include request URLs, raw errors or secret values.
+
 ## Sarah's flow
 Send a single photo in the bot's private chat with this caption:
 
@@ -11,9 +15,9 @@ The bot commits image and updated artworks.json atomically to main, newest entry
 
 ## Activation
 1. Create a new dedicated bot in Telegram through @BotFather using /newbot. Do not reuse a bot serving another application.
-2. Obtain Sarah's numeric Telegram user ID (not her @username).
+2. Sarah's numeric Telegram user ID is configured as 1019741898.
 3. Create a fine-grained GitHub access token scoped ONLY to this repository, with Contents read/write. It must be permitted to update main, and the organization must approve it if required. A user token write triggers branch-based Pages publishing; do not substitute an Actions GITHUB_TOKEN.
-4. In Cloudflare Workers create/deploy this module with wrangler.jsonc. Add encrypted secrets BOT_TOKEN, GITHUB_TOKEN, SARAH_USER_ID and WEBHOOK_SECRET. Generate WEBHOOK_SECRET as a long random string of letters, digits, underscores or hyphens. Never commit these values or paste them into issues.
+4. In Cloudflare Workers create/deploy this module with wrangler.jsonc. Add encrypted secrets BOT_TOKEN, GITHUB_TOKEN and WEBHOOK_SECRET. Generate WEBHOOK_SECRET as a long random string of letters, digits, underscores or hyphens. Never commit these values or paste them into issues.
 5. From this directory run `npx wrangler deploy` after configuring the secrets (or deploy through the Cloudflare dashboard). Required secrets must be present before enabling Telegram.
 6. Register the bot's setWebhook through Telegram's API with url `https://YOUR-WORKER.workers.dev/telegram`, secret_token equal to WEBHOOK_SECRET, allowed_updates `["message"]`, and max_connections `1`. Use a private local script or secure API client; avoid tokens in shell history, browser address bars or screenshots. Check getWebhookInfo for delivery errors.
 7. Test one upload from Sarah, confirm its GitHub commit and successful Pages deployment, and check https://sarahwadmore.com/. Test an unauthorized user: no commit should be created.
