@@ -2,7 +2,7 @@
 
 [Visit the website](https://sarah-pfly.github.io/ART-BY-SARAH-WADMORE/)
 
-A responsive, artwork-first gallery with a full-width wall of images: four columns on desktop, two on mobile, and varied tile heights. Select any artwork to view the complete piece in a fullscreen viewer with keyboard, arrow and swipe navigation.
+A responsive, artwork-first gallery with a full-width wall of images: three columns on desktop, two on mobile, and varied tile heights. Select any artwork to view the complete piece in a fullscreen viewer with keyboard, arrow and swipe navigation.
 
 ## Artworks
 
