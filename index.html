@@ -33,10 +33,11 @@ function stopVideo(){fullVideo.pause();fullVideo.removeAttribute('src');fullVide
 function syncPreviews(){
  document.querySelectorAll('.tile video[data-preview]').forEach(video=>{
  const visible=video.dataset.visible==='true';
- if(visible&&!reducedMotion.matches&&!box.open)video.play().catch(()=>{});else video.pause();
+ if(visible&&!reducedMotion.matches&&!box.open&&!document.hidden)video.play().catch(()=>{});else video.pause();
  });
 }
 reducedMotion.addEventListener('change',syncPreviews);
+document.addEventListener('visibilitychange',syncPreviews);
 let works=[],current=0,opener=null,startX=0,startY=0;
 
 const galleryStatus=document.querySelector('#gallery-status'),mediaStatus=document.querySelector('#media-status');
@@ -79,7 +80,7 @@ function render(){
  if(isVideo(work)){
  img=document.createElement('video');img.src=work.src;img.muted=true;img.playsInline=true;img.preload='metadata';img.setAttribute('aria-hidden','true');
  if(work.thumbnail)img.poster=work.thumbnail;
- if(work.animated){img.loop=true;const observer=new IntersectionObserver(entries=>{for(const entry of entries){img.dataset.visible=String(entry.isIntersecting);syncPreviews()}});observer.observe(img);img.dataset.preview='true'}
+ {img.loop=true;const observer=new IntersectionObserver(entries=>{for(const entry of entries){img.dataset.visible=String(entry.isIntersecting);syncPreviews()}});observer.observe(img);img.dataset.preview='true'}
  const badge=document.createElement('span');badge.className='play-badge';badge.textContent='▶';badge.setAttribute('aria-hidden','true');button.append(badge);
  }else{img=document.createElement('img');img.src=work.thumbnail||work.src;img.alt=work.title;img.loading=index<3?'eager':'lazy';img.decoding='async'}
 
