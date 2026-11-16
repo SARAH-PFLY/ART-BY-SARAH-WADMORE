@@ -78,3 +78,11 @@ Send /status to compare saved artwork/blog lists with the live website. The repl
 Uploads atomically create /art/UPLOAD_ID/index.html alongside media and artworks.json. Each page contains static Open Graph/Twitter metadata with the artwork title, notes and image URL. Video pages use video metadata rather than inventing a poster image. Browsers open the artwork in the existing gallery; crawlers can read metadata without JavaScript. Share controls use these URLs; the old ?art= links still work. Platform caching controls when previews refresh.
 
 Gallery deletion also removes the associated social preview page. It still retains the original media and Git history. Deploy worker.mjs, blog.mjs AND upgrades.mjs together, preserving ART_DRAFTS and all encrypted secrets. Run node --test telegram/worker.test.mjs telegram/delete.test.mjs telegram/blog.test.mjs telegram/miniapp.test.mjs telegram/upgrades.test.mjs.
+
+## Smaller gallery images
+
+The homepage prefers each entry's thumbnail; fullscreen, downloads and social image metadata retain the original src. Existing still images have JPEG gallery previews bounded to 720 × 1080 pixels, with aspect ratio preserved. Width/height metadata reserves the correct gallery space while loading. A missing thumbnail falls back to the original.
+
+Future Telegram image uploads reuse a smaller Telegram photo variant (prefer the largest available up to 800 px wide), or a document's Telegram thumbnail when supplied. The bot saves that JPEG under artworks/thumbnails/ in the same atomic commit as the original and manifest. If Telegram provides no usable thumbnail or its download fails, the original upload still succeeds and the gallery uses the original. Animated GIF uploads can use a static gallery preview while the original animation opens in fullscreen. Videos retain their existing looping previews.
+
+Deploy worker.mjs, blog.mjs, upgrades.mjs AND thumbnails.mjs together. Keep existing bindings and secrets. Run node --test telegram/worker.test.mjs telegram/delete.test.mjs telegram/blog.test.mjs telegram/thumbnails.test.mjs.

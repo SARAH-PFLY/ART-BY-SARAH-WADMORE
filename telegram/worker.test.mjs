@@ -86,3 +86,11 @@ for(const message of [
  assert.match(result.reply,/Upload rejected.*37.*Maximum 36/);
 }
 console.log('36-character boundaries, emoji and pre-download rejection passed');
+
+result=await run({caption:'/upload Smaller preview',photo:[{file_id:'small',width:320,height:200,file_size:10},{file_id:'original',width:1600,height:1000,file_size:20}]},Uint8Array.from([255,216,255,0]));
+assert.equal(result.saved[0].src,'artworks/telegram-42.jpg');
+assert.equal(result.saved[0].thumbnail,'artworks/thumbnails/telegram-42.jpg');
+assert.equal(result.saved[0].width,1600);
+assert.equal(result.saved[0].thumbnailWidth,320);
+assert.equal(result.tree.tree.length,4);
+console.log('Photo upload saves thumbnail separately and preserves original media');

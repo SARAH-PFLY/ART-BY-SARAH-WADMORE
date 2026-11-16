@@ -1,3 +1,4 @@
+import {downloadThumbnail} from './thumbnails.mjs';
 import {sharePath,renderSharePage,guidedUpload,publicationStatus} from './upgrades.mjs';
 import {parseBlog,makePost,renderArticle,renderIndex,sitemap,rss} from './blog.mjs';
 const LIMIT=8*1024*1024;
@@ -210,6 +211,7 @@ async function handle(update,env){
  const detected=detectMedia(bytes);
  if(!detected){await say('Supported formats: JPEG, PNG, WebP, GIF and MP4. Convert MOV/HEVC videos to H.264 MP4 before uploading.');return}
  const {ext,type}=detected;
+ const thumbnail=type==='image'?await downloadThumbnail(media,env,telegram):null;
  const id=String(update.update_id),path='artworks/telegram-'+id+'.'+ext;
  // Commit image and manifest together, using the branch ref as a compare-and-swap.
  // A retry reloads the current tree, so concurrent uploads cannot overwrite each other.
@@ -218,11 +220,13 @@ async function handle(update,env){
  const blocked=checkArtworkTitle(state,details.title,id);if(blocked){await say(blocked);return}
  const commit=await gh(env,'git/commits/'+head);
  const titleCheckedAt=new Date().toISOString();
- const entry={...details,titleCheckedAt,titleCheckedHead:head,src:path,type,animated:!!(detected.animated||media.animation),uploadId:id,uploadedAt:new Date().toISOString()};
+ const original=media.photo?.at(-1)||media.document;
+ const entry={...details,...(original?.width&&original?.height?{width:original.width,height:original.height}:{}),...(thumbnail?{thumbnail:'artworks/thumbnails/telegram-'+id+'.jpg',thumbnailWidth:thumbnail.width,thumbnailHeight:thumbnail.height}:{}),titleCheckedAt,titleCheckedHead:head,src:path,type,animated:!!(detected.animated||media.animation),uploadId:id,uploadedAt:new Date().toISOString()};
+ const thumbnailBlob=thumbnail?await gh(env,'git/blobs','POST',{encoding:'base64',content:b64(thumbnail.bytes)}):null;
  const preview=await gh(env,'git/blobs','POST',{encoding:'base64',content:encode(renderSharePage(entry))});
  const image=await gh(env,'git/blobs','POST',{encoding:'base64',content:b64(bytes)});
  const json=await gh(env,'git/blobs','POST',{encoding:'base64',content:encode(JSON.stringify([entry,...list],null,2)+'\n')});
- const tree=await gh(env,'git/trees','POST',{base_tree:commit.tree.sha,tree:[{path:sharePath(entry),mode:'100644',type:'blob',sha:preview.sha},{path,mode:'100644',type:'blob',sha:image.sha},{path:'artworks.json',mode:'100644',type:'blob',sha:json.sha}]});
+ const tree=await gh(env,'git/trees','POST',{base_tree:commit.tree.sha,tree:[...(thumbnailBlob?[{path:entry.thumbnail,mode:'100644',type:'blob',sha:thumbnailBlob.sha}]:[]),{path:sharePath(entry),mode:'100644',type:'blob',sha:preview.sha},{path,mode:'100644',type:'blob',sha:image.sha},{path:'artworks.json',mode:'100644',type:'blob',sha:json.sha}]});
  const next=await gh(env,'git/commits','POST',{message:'Add artwork from Telegram',tree:tree.sha,parents:[head]});
  try{await gh(env,'git/refs/heads/main','PATCH',{sha:next.sha,force:false})}catch(error){if(attempt<3&&/GitHub (409|422)/.test(error.message))continue;throw error}
  await say('Saved: '+details.title+'\nPublishing to the website. Send /status to check when it is live.\nhttps://sarahwadmore.com/art/'+id+'/');return;

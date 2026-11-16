@@ -89,7 +89,7 @@ function layoutWall(){
  const columns=Math.min(works.length,window.matchMedia('(max-width:650px)').matches?2:3);
  if(!columns){wall.style.height='0px';return}
  const tiles=Array.from(wall.querySelectorAll('.tile')),width=wall.clientWidth/columns;
- const heights=tiles.map(tile=>{const media=tile.querySelector('img,video');const w=media.naturalWidth||media.videoWidth||1,h=media.naturalHeight||media.videoHeight||1;return width*h/w});
+ const heights=tiles.map(tile=>{const media=tile.querySelector('img,video');const w=media.naturalWidth||media.videoWidth||Number(media.getAttribute('width'))||1,h=media.naturalHeight||media.videoHeight||Number(media.getAttribute('height'))||1;return width*h/w});
  const layout=wallLayout(heights,columns);
  tiles.forEach((tile,index)=>{const item=layout[index];tile.style.width=width+'px';tile.style.height=item.height+'px';tile.style.left=item.column*width+'px';tile.style.top=item.top+'px'});
  wall.style.height=Math.max(0,...layout.map(item=>item.top+item.height))+'px';
@@ -191,7 +191,7 @@ function render(){
  if(work.thumbnail)img.poster=work.thumbnail;
  {img.loop=true;const observer=new IntersectionObserver(entries=>{for(const entry of entries){img.dataset.visible=String(entry.isIntersecting);syncPreviews()}});observer.observe(img);img.dataset.preview='true'}
  const badge=document.createElement('span');badge.className='play-badge';badge.textContent='▶';badge.setAttribute('aria-hidden','true');button.append(badge);
- }else{img=document.createElement('img');img.src=work.thumbnail||work.src;img.alt=work.title;img.loading=index<3?'eager':'lazy';img.decoding='async'}
+ }else{img=document.createElement('img');if(work.width&&work.height){img.width=work.width;img.height=work.height}else if(work.thumbnailWidth&&work.thumbnailHeight){img.width=work.thumbnailWidth;img.height=work.thumbnailHeight}img.src=work.thumbnail||work.src;if(work.thumbnail)img.addEventListener('error',()=>{img.src=work.src},{once:true});img.alt=work.title;img.loading=index<3?'eager':'lazy';img.decoding='async'}
 
  img.addEventListener('load',layoutWall);img.addEventListener('loadedmetadata',layoutWall);img.addEventListener('error',layoutWall);
  const caption=document.createElement('span');caption.className='caption';caption.textContent=work.title+' ↗';button.append(img,caption);
