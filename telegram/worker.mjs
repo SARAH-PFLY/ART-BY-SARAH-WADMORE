@@ -1,4 +1,37 @@
 const LIMIT=8*1024*1024;
+export function hasH264Video(bytes){
+ try{
+ const view=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+ const text=(a,b)=>String.fromCharCode(...bytes.slice(a,b));
+ function boxes(start,end){
+ const result=[];
+ for(let p=start;p<end;){
+ if(p+8>end)throw Error('Truncated box');
+ let size=view.getUint32(p),header=8;
+ if(size===1){if(p+16>end)throw Error('Truncated extended box');size=view.getUint32(p+8)*4294967296+view.getUint32(p+12);header=16}
+ if(size===0)size=end-p;
+ if(!Number.isSafeInteger(size)||size<header||p+size>end)throw Error('Invalid box size');
+ result.push({type:text(p+4,p+8),start:p+header,end:p+size});p+=size;
+ }
+ return result;
+ }
+ const root=boxes(0,bytes.length);const moov=root.find(b=>b.type==='moov');if(!moov)return false;
+ let videoTracks=0;
+ for(const track of boxes(moov.start,moov.end).filter(b=>b.type==='trak')){
+ const mdia=boxes(track.start,track.end).find(b=>b.type==='mdia');if(!mdia)continue;
+ const children=boxes(mdia.start,mdia.end),handler=children.find(b=>b.type==='hdlr');
+ if(!handler||handler.start+12>handler.end||text(handler.start+8,handler.start+12)!=='vide')continue;
+ videoTracks++;
+ const minf=children.find(b=>b.type==='minf');if(!minf)return false;
+ const stbl=boxes(minf.start,minf.end).find(b=>b.type==='stbl');if(!stbl)return false;
+ const stsd=boxes(stbl.start,stbl.end).find(b=>b.type==='stsd');if(!stsd||stsd.start+8>stsd.end)return false;
+ const entries=boxes(stsd.start+8,stsd.end),count=view.getUint32(stsd.start+4);
+ if(!count||count!==entries.length||entries.some(e=>!['avc1','avc3'].includes(e.type)||e.end-e.start<78))return false;
+ }
+ return videoTracks>0;
+ }catch{return false}
+}
+
 export function detectMedia(bytes){
  const text=(a,b)=>String.fromCharCode(...bytes.slice(a,b));
  if(bytes[0]===255&&bytes[1]===216&&bytes[2]===255)return {ext:'jpg',type:'image'};
@@ -7,7 +40,7 @@ export function detectMedia(bytes){
  if(['GIF87a','GIF89a'].includes(text(0,6)))return {ext:'gif',type:'image',animated:true};
  if(bytes.length>=16&&text(4,8)==='ftyp'){
  const brands=[];for(let i=8;i<Math.min(bytes.length,64);i+=4)if(i!==12)brands.push(text(i,i+4));
- if(brands.some(b=>['isom','iso2','mp41','mp42','avc1','M4V ','dash'].includes(b)))return {ext:'mp4',type:'video'};
+ if(brands.some(b=>['isom','iso2','mp41','mp42','avc1','M4V ','dash'].includes(b))&&hasH264Video(bytes))return {ext:'mp4',type:'video'};
  }
  return null;
 }
