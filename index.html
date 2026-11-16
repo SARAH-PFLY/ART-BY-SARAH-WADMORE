@@ -57,12 +57,13 @@ header nav{display:flex;align-items:center;gap:24px;font-size:12px}.about-link{c
 @keyframes share-shine{0%,60%{left:-70%}100%{left:150%}}
 @media(max-width:480px){#share-panel{padding:22px;border-radius:20px;max-height:calc(100dvh - 24px)}#share-panel h2{font-size:23px}}
 @media(prefers-reduced-motion:reduce){#share-panel *,#share-panel *::after{animation:none!important;transition:none!important}}
-</style><script defer src="/assets/blog-nav.js"></script><link rel="canonical" href="https://sarahwadmore.com/"><meta property="og:type" content="website"><meta property="og:title" content="Art by Sarah Wadmore"><meta property="og:description" content="Explore Sarah Wadmore’s artwork gallery and studio journal."><meta property="og:url" content="https://sarahwadmore.com/"><meta name="twitter:card" content="summary"><link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="alternate" type="application/rss+xml" title="Sarah Wadmore — Journal" href="/feed.xml"><script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"Art by Sarah Wadmore","url":"https://sarahwadmore.com/"}</script><script src="https://telegram.org/js/telegram-web-app.js"></script><script defer src="/assets/telegram-mini-app.js"></script><link rel="stylesheet" href="/assets/telegram-mini-app.css"><script defer src="/assets/radio.js"></script><link rel="stylesheet" href="/assets/radio.css"><script defer src="/assets/native-share.js"></script></head>
+</style><script defer src="/assets/blog-nav.js"></script><link rel="canonical" href="https://sarahwadmore.com/"><meta property="og:type" content="website"><meta property="og:title" content="Art by Sarah Wadmore"><meta property="og:description" content="Explore Sarah Wadmore’s artwork gallery and studio journal."><meta property="og:url" content="https://sarahwadmore.com/"><meta name="twitter:card" content="summary"><link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="alternate" type="application/rss+xml" title="Sarah Wadmore — Journal" href="/feed.xml"><script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"Art by Sarah Wadmore","url":"https://sarahwadmore.com/"}</script><script src="https://telegram.org/js/telegram-web-app.js"></script><script defer src="/assets/telegram-mini-app.js"></script><link rel="stylesheet" href="/assets/telegram-mini-app.css"><script defer src="/assets/radio.js"></script><link rel="stylesheet" href="/assets/radio.css"><script defer src="/assets/native-share.js"></script><link rel="stylesheet" href="/assets/gallery-experience.css"></head>
 <body><a class="skip-link" href="#wall">Skip to artworks</a>
 <header><h1><small>Art by</small>Sarah Wadmore</h1><nav aria-label="Main navigation"><a class="about-link" href="/about/">ABOUT</a><details class="blog-menu"><summary>BLOG</summary><div data-blog-links><a href="/blog/">View all posts →</a></div></details></nav></header>
 <p id="gallery-status" role="status" aria-live="polite">Loading artworks…</p><noscript><p style="padding:20px">Enable JavaScript to explore the interactive artwork wall. You can also <a href="/blog/">read the journal</a>.</p></noscript><main id="wall" aria-label="Artwork gallery"></main>
 <footer><span>© <span id="year"></span> Sarah Wadmore</span><span id="note">Demo tiles · Original artworks coming soon</span></footer>
 <dialog id="lightbox" aria-label="Artwork viewer"><div class="viewer"><img id="full" alt=""><video id="full-video" controls playsinline preload="metadata" hidden></video></div><div class="controls"><button class="control" id="share" aria-label="Share artwork">↗</button><button class="control" id="expand" aria-label="Enter device fullscreen">⛶</button><button class="control" id="close" aria-label="Close artwork viewer">×</button></div><button class="control prev" id="prev" aria-label="Previous artwork">‹</button><button class="control next" id="next" aria-label="Next artwork">›</button><p id="media-status" role="status" aria-live="polite"></p><div id="detail"></div></dialog>
+<script src="/assets/gallery-experience.js"></script>
 <script>
 'use strict';
 const wall=document.querySelector('#wall'),box=document.querySelector('#lightbox'),full=document.querySelector('#full'),detail=document.querySelector('#detail');
@@ -73,12 +74,16 @@ function stopVideo(){fullVideo.pause();fullVideo.removeAttribute('src');fullVide
 function syncPreviews(){
  document.querySelectorAll('.tile video[data-preview]').forEach(video=>{
  const visible=video.dataset.visible==='true';
- if(visible&&!reducedMotion.matches&&!box.open&&!document.hidden)video.play().catch(()=>{});else video.pause();
+ if(visible&&!reducedMotion.matches&&!experience.saving&&!box.open&&!document.hidden){
+ if(!video.hasAttribute('src'))video.src=video.dataset.src;
+ video.play().catch(()=>{});
+ }else{video.pause();if(experience.saving&&video.hasAttribute('src')){video.removeAttribute('src');video.load()}}
  });
 }
 reducedMotion.addEventListener('change',syncPreviews);
 document.addEventListener('visibilitychange',syncPreviews);
-let works=[],current=0,opener=null,startX=0,startY=0;
+let works=[],current=0,opener=null;
+const experience=GalleryExperience.create({wall,box,full,fullVideo,reducedMotion,getWorks:()=>works,getCurrent:()=>current,show:index=>show(index),syncPreviews:()=>syncPreviews(),layout:()=>layoutWall()});
 
 const galleryStatus=document.querySelector('#gallery-status'),mediaStatus=document.querySelector('#media-status');
 function wallLayout(heights,columns){
@@ -93,6 +98,7 @@ function layoutWall(){
  const layout=wallLayout(heights,columns);
  tiles.forEach((tile,index)=>{const item=layout[index];tile.style.width=width+'px';tile.style.height=item.height+'px';tile.style.left=item.column*width+'px';tile.style.top=item.top+'px'});
  wall.style.height=Math.max(0,...layout.map(item=>item.top+item.height))+'px';
+ experience.restorePosition();
 }
 window.addEventListener('resize',layoutWall);
 function artworkKey(work){return work.uploadId||work.src}
@@ -203,28 +209,28 @@ function render(){
  const button=document.createElement('button');button.className='tile';button.setAttribute('aria-label','Open '+work.title);
  let img;
  if(isVideo(work)){
- img=document.createElement('video');img.src=work.src;img.muted=true;img.playsInline=true;img.preload='metadata';img.setAttribute('aria-hidden','true');
+ img=document.createElement('video');img.dataset.src=work.src;img.width=work.width||16;img.height=work.height||9;img.muted=true;img.playsInline=true;img.preload='metadata';img.setAttribute('aria-hidden','true');
  if(work.thumbnail)img.poster=work.thumbnail;
  {img.loop=true;const observer=new IntersectionObserver(entries=>{for(const entry of entries){img.dataset.visible=String(entry.isIntersecting);syncPreviews()}});observer.observe(img);img.dataset.preview='true'}
  const badge=document.createElement('span');badge.className='play-badge';badge.textContent='▶';badge.setAttribute('aria-hidden','true');button.append(badge);
- }else{img=document.createElement('img');if(work.width&&work.height){img.width=work.width;img.height=work.height}else if(work.thumbnailWidth&&work.thumbnailHeight){img.width=work.thumbnailWidth;img.height=work.thumbnailHeight}img.src=work.thumbnail||work.src;if(work.thumbnail)img.addEventListener('error',()=>{img.src=work.src},{once:true});img.alt=work.title;img.loading=index<3?'eager':'lazy';img.decoding='async'}
+ }else{img=document.createElement('img');img.alt=work.title;img.loading=index<3?'eager':'lazy';img.decoding='async';experience.bindImage(img,work)}
+ button.dataset.artwork=artworkKey(work);
+ if(work.featured){const badge=document.createElement('span');badge.className='featured-badge';badge.textContent='FEATURED';button.append(badge)}
 
  img.addEventListener('load',layoutWall);img.addEventListener('loadedmetadata',layoutWall);img.addEventListener('error',layoutWall);
  const caption=document.createElement('span');caption.className='caption';caption.textContent=work.title+' ↗';button.append(img,caption);
  if(work.demo){const label=document.createElement('span');label.className='demo';label.textContent='DEMO TILE';button.append(label)}
- button.addEventListener('click',()=>{opener=button;document.querySelectorAll('.tile video').forEach(video=>video.pause());show(index);box.showModal();document.body.style.overflow='hidden';document.querySelector('#close').focus()});wall.append(button);
+ button.addEventListener('click',()=>{opener=button;experience.savePosition();document.querySelectorAll('.tile video').forEach(video=>video.pause());show(index);box.showModal();document.body.style.overflow='hidden';document.querySelector('#close').focus()});wall.append(button);
  });
  layoutWall();
 }
-function show(index){current=(index+works.length)%works.length;const work=works[current];setArtworkURL();mediaStatus.textContent='Loading artwork…';stopVideo();full.hidden=isVideo(work);if(isVideo(work)){full.removeAttribute('src');fullVideo.hidden=false;fullVideo.src=work.src;fullVideo.setAttribute('aria-label',work.title);fullVideo.loop=!!work.animated;fullVideo.muted=!!work.animated;fullVideo.load();if(work.animated&&!reducedMotion.matches)fullVideo.play().catch(()=>{})}else{full.src=work.src;full.alt=work.title}detail.replaceChildren(document.createTextNode(work.title));const meta=document.createElement('span');meta.textContent=(current+1)+' / '+works.length+(work.demo?' · Layout placeholder':work.medium?' · '+work.medium:'');detail.append(meta)}
+function show(index){current=(index+works.length)%works.length;const work=works[current];experience.onShow(work);setArtworkURL();mediaStatus.textContent='Loading artwork…';stopVideo();full.hidden=isVideo(work);if(isVideo(work)){full.removeAttribute('src');fullVideo.hidden=false;fullVideo.src=work.src;fullVideo.setAttribute('aria-label',work.title);fullVideo.loop=!!work.animated;fullVideo.muted=!!work.animated;fullVideo.load();if(work.animated&&!reducedMotion.matches&&!experience.saving)fullVideo.play().catch(()=>{})}else{full.src=work.src;full.alt=work.title}detail.replaceChildren(document.createTextNode(work.title));const meta=document.createElement('span');meta.textContent=(current+1)+' / '+works.length+(work.demo?' · Layout placeholder':work.medium?' · '+work.medium:'');detail.append(meta)}
 async function closeViewer(){if(window.__sarahMiniApp)window.__sarahMiniApp.exitFullscreen();else if(document.fullscreenElement&&document.exitFullscreen)await document.exitFullscreen().catch(()=>{});box.close()}
 document.querySelector('#close').onclick=closeViewer;
 box.addEventListener('close',()=>{stopVideo();clearArtworkURL();document.body.style.overflow='';syncPreviews();opener?.focus()});
 box.addEventListener('cancel',event=>{event.preventDefault();closeViewer()});
 document.querySelector('#prev').onclick=()=>show(current-1);document.querySelector('#next').onclick=()=>show(current+1);
 box.addEventListener('keydown',event=>{if(event.target===fullVideo)return;if(event.key==='ArrowLeft'){event.preventDefault();show(current-1)}if(event.key==='ArrowRight'){event.preventDefault();show(current+1)}});
-box.addEventListener('touchstart',event=>{if(event.target===fullVideo){startX=null;return}startX=event.changedTouches[0].clientX;startY=event.changedTouches[0].clientY},{passive:true});
-box.addEventListener('touchend',event=>{if(startX===null||event.target===fullVideo)return;const dx=event.changedTouches[0].clientX-startX,dy=event.changedTouches[0].clientY-startY;if(Math.abs(dx)>60&&Math.abs(dx)>Math.abs(dy)*1.5)show(current+(dx<0?1:-1))},{passive:true});
 const expand=document.querySelector('#expand');
 if(!document.documentElement.requestFullscreen)expand.hidden=true;
 expand.onclick=async()=>{if(window.__sarahMiniApp){window.__sarahMiniApp.toggleFullscreen();return}try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen()}catch{mediaStatus.textContent='Fullscreen is not available in this browser.'}};
@@ -234,11 +240,11 @@ async function init(){
  try{
  const response=await fetch('./artworks.json',{cache:'no-cache'});if(!response.ok)throw Error('Gallery unavailable');
  const data=await response.json();if(!Array.isArray(data))throw Error('Invalid gallery');
- works=data.filter(w=>w&&typeof w.src==='string'&&typeof w.title==='string');wall.replaceChildren();
+ works=experience.ordered(data.filter(w=>w&&typeof w.src==='string'&&typeof w.title==='string'));wall.replaceChildren();
  galleryStatus.textContent=works.length?'':'No artworks to display yet.';
  document.querySelector('#note').textContent='Select an artwork to explore';
  if(works.length){
- render();
+ render();experience.restorePosition();
  const key=new URL(location.href).searchParams.get('art'),index=works.findIndex(work=>artworkKey(work)===key);
  if(key&&index>=0){opener=wall.querySelectorAll('.tile')[index];show(index);box.showModal();document.body.style.overflow='hidden';document.querySelector('#close').focus()}
  else if(key)galleryStatus.textContent='That artwork is no longer in the gallery. Explore the collection below.';

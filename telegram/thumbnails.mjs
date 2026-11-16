@@ -1,15 +1,15 @@
 // Prefer Telegram's already-generated smaller files; never alter the full upload.
-export function selectThumbnail(media){
+export function selectThumbnail(media,maxWidth=800){
  const original=media.photo?.at(-1)||media.animation||media.video||media.document;
  if(!original)return null;
  if(media.photo?.length>1){
  const candidates=media.photo.filter(p=>p.file_id!==original.file_id&&p.width>0&&p.height>0).sort((a,b)=>a.width-b.width);
- return candidates.filter(p=>p.width<=800).at(-1)||candidates[0]||null;
+ return candidates.filter(p=>p.width<=maxWidth).at(-1)||candidates[0]||null;
  }
  return media.document?.thumbnail||media.animation?.thumbnail||media.video?.thumbnail||null;
 }
-export async function downloadThumbnail(media,env,telegram){
- const file=selectThumbnail(media);if(!file||file.file_size>1024*1024)return null;
+export async function downloadThumbnail(media,env,telegram,maxWidth=800){
+ const file=selectThumbnail(media,maxWidth);if(!file||file.file_size>1024*1024)return null;
  try{
  const info=await telegram(env,'getFile',{file_id:file.file_id});
  const response=await fetch('https://api.telegram.org/file/bot'+env.BOT_TOKEN+'/'+info.file_path);
