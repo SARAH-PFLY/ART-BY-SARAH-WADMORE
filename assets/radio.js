@@ -4,6 +4,7 @@
  const pathAllowed=url=>url.origin===location.origin&&(url.pathname==='/'||url.pathname==='/about/'||url.pathname.startsWith('/blog/'))&&!/\.(json|xml|txt|md|pdf)$/i.test(url.pathname);
  let shared;
  try{if(parent!==window&&parent.location.origin===location.origin)shared=parent.__sarahRadio}catch{}
+ const embedded=!!shared;
  if(!shared){
  const audio=document.createElement('audio');audio.preload='none';audio.volume=.5;document.body.append(audio);
  let wanted=false,state='off',generation=0,frame=null;const listeners=new Set(),initial=location.href;
@@ -26,7 +27,8 @@
  document.body.append(frame);
  }
  if(push)history.pushState({radioPage:url.href},'',url.href);
- frame.src=url.href;
+ // The top document owns history; child navigation must not add a second entry.
+ frame.contentWindow.location.replace(url.href);
  },
  async toggle(){
  if(wanted){stop();return}
@@ -48,6 +50,11 @@
  document.addEventListener('click',event=>{
  const a=event.target.closest?.('a[href]');if(!a||event.defaultPrevented||event.button!==0||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey||a.target==='_blank'||a.hasAttribute('download'))return;
  const url=new URL(a.href,location.href);
+ // Keep outgoing sites out of our persistent same-origin content frame.
+ // Let the default click (or Telegram's later link handler) open the destination.
+ if(embedded&&url.origin!==location.origin&&['https:','http:'].includes(url.protocol)){
+ a.target='_blank';a.relList.add('noopener','noreferrer');return;
+ }
  if(url.origin===location.origin&&url.pathname===location.pathname&&url.search===location.search&&url.hash)return;
  if(pathAllowed(url)&&(shared.active||shared.framed)){event.preventDefault();shared.navigate(url.href)}
  });
