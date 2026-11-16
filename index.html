@@ -22,6 +22,9 @@ header nav{display:flex;align-items:center;gap:24px;font-size:12px}.about-link{c
 #detail{pointer-events:none}#lightbox .viewer{position:relative;z-index:0;min-height:0}
 #lightbox .controls{z-index:5}#lightbox .prev,#lightbox .next{z-index:6;pointer-events:auto;touch-action:manipulation}
 #lightbox .control{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+
+#share-panel{inset:0;margin:auto;width:min(700px,94vw);height:auto;max-height:90dvh;padding:24px;border:1px solid #777;overflow:auto;background:#111;color:#fff}
+#share-panel::backdrop{background:#000b}#share-panel h2{font-size:21px;margin-top:0}#share-panel label{display:block;margin:15px 0 8px}#share-panel select,#share-panel textarea{width:100%;padding:10px;background:#222;color:#fff;border:1px solid #777;font:inherit}#share-panel textarea{resize:vertical;line-height:1.5}#share-panel p{font-size:13px;line-height:1.5}.share-actions{display:flex;flex-wrap:wrap;gap:10px}.share-actions button,.share-actions a{background:#fff;color:#111;padding:12px;border:0;border-radius:4px;text-decoration:none;font-size:14px}.share-actions a[aria-disabled=true]{opacity:.5}
 </style><script defer src="/assets/blog-nav.js"></script><link rel="canonical" href="https://sarahwadmore.com/"><meta property="og:type" content="website"><meta property="og:title" content="Art by Sarah Wadmore"><meta property="og:description" content="Explore Sarah Wadmore’s artwork gallery and studio journal."><meta property="og:url" content="https://sarahwadmore.com/"><meta name="twitter:card" content="summary"><link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="alternate" type="application/rss+xml" title="Sarah Wadmore — Journal" href="/feed.xml"><script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"Art by Sarah Wadmore","url":"https://sarahwadmore.com/"}</script><script src="https://telegram.org/js/telegram-web-app.js"></script><script defer src="/assets/telegram-mini-app.js"></script><link rel="stylesheet" href="/assets/telegram-mini-app.css"><script defer src="/assets/radio.js"></script><link rel="stylesheet" href="/assets/radio.css"></head>
 <body><a class="skip-link" href="#wall">Skip to artworks</a>
 <header><h1><small>Art by</small>Sarah Wadmore</h1><nav aria-label="Main navigation"><a class="about-link" href="/about/">ABOUT</a><details class="blog-menu"><summary>BLOG</summary><div data-blog-links><a href="/blog/">View all posts →</a></div></details></nav></header>
@@ -63,9 +66,76 @@ window.addEventListener('resize',layoutWall);
 function artworkKey(work){return work.uploadId||work.src}
 function setArtworkURL(){const url=new URL(location.href);url.searchParams.set('art',artworkKey(works[current]));history.replaceState(null,'',url);window.__sarahRadio?.syncURL?.(url.href)}
 function clearArtworkURL(){const url=new URL(location.href);url.searchParams.delete('art');history.replaceState(null,'',url);window.__sarahRadio?.syncURL?.(url.href)}
-document.querySelector('#share').onclick=async()=>{
- const url=new URL(location.href);url.searchParams.set('art',artworkKey(works[current]));
- try{if(navigator.share)await navigator.share({title:works[current].title,url:url.href});else{await navigator.clipboard.writeText(url.href);mediaStatus.textContent='Artwork link copied.'}}catch(error){if(error.name!=='AbortError')mediaStatus.textContent='Copy the artwork URL from your address bar to share it.'}
+
+const sharePanel=document.createElement('dialog');
+sharePanel.id='share-panel';
+sharePanel.setAttribute('aria-labelledby','share-heading');
+sharePanel.innerHTML='<h2 id="share-heading">Share Sarah’s artwork</h2><label for="share-platform">Choose a platform</label><select id="share-platform"><option value="x">X</option><option value="facebook">Facebook</option><option value="instagram">Instagram</option><option value="tiktok">TikTok</option></select><label for="share-caption">Your caption — edit before sharing</label><textarea id="share-caption" rows="12"></textarea><p id="share-count"></p><p id="share-help"></p><div class="share-actions"><button id="copy-caption">Copy caption</button><a id="open-social" target="_blank" rel="noopener noreferrer">Continue to platform</a><a id="download-art" download>Download artwork</a><button id="device-share">Share via device</button><button id="dismiss-share">Back to artwork</button></div><p id="share-feedback" role="status" aria-live="polite"></p>';
+box.append(sharePanel);
+const platformSelect=sharePanel.querySelector('#share-platform'),captionInput=sharePanel.querySelector('#share-caption'),shareFeedback=sharePanel.querySelector('#share-feedback');
+let shareWork,shareURL;
+function makeShareCaption(work,platform,url){
+ const title=work.title.trim()||'Artwork by Sarah Wadmore';
+ const medium=work.medium?'Medium / artist notes: '+work.medium+'\n\n':'';
+ if(platform==='x'){
+ // ASCII keeps the standard X weighted character budget predictable.
+ const shortTitle=title.replace(/[^\x20-\x7E]/g,'').trim().slice(0,38)||'Explore the artwork';
+ return shortTitle+' — Sarah Wadmore (PFLY / PU51FLY), Graffiti Kings artist and Crypto Moongirls creator. Discover her artwork, digital collections and creative world. #SarahWadmore #PFLY\n'+url;
+ }
+ const intro=platform==='instagram'?'Meet the artist behind the artwork.':platform==='tiktok'?'Art, characters and a creative world: meet Sarah PFLY.':'Discover Sarah Wadmore and the creative world behind her artwork.';
+ return intro+'\n\n'+title+'\n\n'+medium+
+ 'Sarah Wadmore, also known as Sarah PFLY and Sarah PU51FLY, is an artist and creative consultant connected with Graffiti Kings, and the creator of Crypto Moongirls. Her practice brings together individual artworks, digital collections and character-led storytelling. This piece is part of her online gallery, where you can open each work for a closer look and explore more of her creative output.\n\n'+
+ 'Sarah’s work also has a place in the history of digital art exhibitions. She contributed to the Graffiti Queens exhibition in Decentraland in April 2021, including its promotional flyer, and was named among the artists in the Graffiti Kings-linked SYNC Network NFT exposition that month. Those connections sit alongside her own artwork and the creative identity she has developed as PFLY / PU51FLY.\n\n'+
+ 'Her digital work includes the Sarah PU51FLY collection on OpenSea and a collection on the WAX blockchain. She has also collaborated with Charlie Buster on “Dropping Bomb’s”. These are part of the wider picture of an artist working across personal expression, collaboration and digital ownership. Explore the About page for the background and source links.\n\n'+
+ 'There is a fictional side to this world too: Queen Sarah PFLY is a character in the Crypto Moonboys universe, connected with Crypto Moongirls and Block Topia. That character belongs to the project’s storytelling; Sarah Wadmore is the real artist behind the work. Her gallery and biography offer a starting point for exploring both, with the artwork at the centre.\n\n'+
+ 'Take a closer look at this piece, explore the rest of the gallery and discover more about Sarah’s art, collaborations and creative world. What catches your eye?\n\n'+
+ 'View this artwork: '+url+'\nAbout Sarah: https://sarahwadmore.com/about/\n\n#SarahWadmore #SarahPFLY #PU51FLY #GraffitiKings #CryptoMoongirls';
+}
+function shareLength(){
+ if(platformSelect.value==='x'){
+ const withoutURL=captionInput.value.replace(/https?:\/\/\S+/g,'xxxxxxxxxxxxxxxxxxxxxxx');
+ return Array.from(withoutURL).reduce((n,c)=>n+(c.codePointAt(0)>4351?2:1),0);
+ }
+ return captionInput.value.length;
+}
+function updateShareLink(){
+ const platform=platformSelect.value,limit=platform==='x'?280:platform==='instagram'?2200:platform==='tiktok'?2200:60000;
+ const count=shareLength(),valid=count<=limit&&count>0;
+ sharePanel.querySelector('#share-count').textContent=count+' / '+limit+' characters'+(platform==='tiktok'?' (caption kept within a conservative 2,200-character budget)':'')+(valid?'':' — shorten the caption to continue');
+ const link=sharePanel.querySelector('#open-social');
+ link.href=platform==='x'?'https://x.com/intent/tweet?'+new URLSearchParams({text:captionInput.value}):platform==='facebook'?'https://www.facebook.com/sharer/sharer.php?'+new URLSearchParams({u:shareURL}):platform==='instagram'?'https://www.instagram.com/':'https://www.tiktok.com/upload';
+ link.textContent=platform==='x'?'Open prefilled X post':'Open '+platform[0].toUpperCase()+platform.slice(1);
+ link.setAttribute('aria-disabled',String(!valid));
+}
+function selectSharePlatform(){
+ captionInput.value=makeShareCaption(shareWork,platformSelect.value,shareURL);
+ sharePanel.querySelector('#share-help').textContent=platformSelect.value==='x'?
+ 'X opens with your caption and artwork link. Sign in there if prompted. To attach the image itself, download it and add it to your post.':
+ 'Copy your caption, then open the platform and sign in if prompted. Paste the caption before posting. For Instagram or TikTok, download the artwork and upload it in the app or website. Captions and files cannot be automatically inserted through these website links.';
+ shareFeedback.textContent='';updateShareLink();
+}
+platformSelect.onchange=selectSharePlatform;
+captionInput.oninput=updateShareLink;
+sharePanel.querySelector('#copy-caption').onclick=async()=>{
+ try{await navigator.clipboard.writeText(captionInput.value);shareFeedback.textContent='Caption copied. Paste it into your social post.'}
+ catch{captionInput.focus();captionInput.select();shareFeedback.textContent='Select and copy the caption above, then paste it into your social post.'}
+};
+sharePanel.querySelector('#open-social').onclick=event=>{if(event.currentTarget.getAttribute('aria-disabled')==='true')event.preventDefault()};
+sharePanel.querySelector('#dismiss-share').onclick=()=>sharePanel.close();
+sharePanel.addEventListener('close',()=>document.querySelector('#share').focus());
+sharePanel.addEventListener('keydown',event=>event.stopPropagation());
+sharePanel.addEventListener('touchstart',event=>event.stopPropagation(),{passive:true});
+sharePanel.addEventListener('touchend',event=>event.stopPropagation(),{passive:true});
+sharePanel.querySelector('#device-share').onclick=async()=>{
+ if(!navigator.share){shareFeedback.textContent='Device sharing is unavailable. Copy the caption and open your chosen platform.';return}
+ try{await navigator.share({title:shareWork.title,text:captionInput.value})}
+ catch(error){if(error.name!=='AbortError')shareFeedback.textContent='Device sharing failed. Copy the caption and open your chosen platform.'}
+};
+document.querySelector('#share').onclick=()=>{
+ shareWork=works[current];if(!shareWork)return;
+ const url=new URL('/',location.origin);url.searchParams.set('art',artworkKey(shareWork));shareURL=url.href;
+ const download=sharePanel.querySelector('#download-art');download.href=new URL(shareWork.src,location.href).href;
+ download.download=shareWork.src.split('/').pop();selectSharePlatform();sharePanel.showModal();
 };
 full.addEventListener('load',()=>{mediaStatus.textContent=''});
 full.addEventListener('error',()=>{if(!full.hidden)mediaStatus.textContent='This artwork could not load. Try the next artwork or reload the page.'});
