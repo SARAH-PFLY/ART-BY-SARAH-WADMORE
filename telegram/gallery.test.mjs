@@ -6,7 +6,7 @@ const sync=html.match(/function syncPreviews\(\)\{[\s\S]*?\n\}/)[0];
 const onClose=html.match(/box.addEventListener\('close',\(\)=>\{([^\n]+)\}\);/)[1];
 let played=0,paused=0,stopped=0,focused=0;
 const video={dataset:{visible:'true'},play(){played++;return Promise.resolve()},pause(){paused++}};
-const context={document:{querySelectorAll:()=>[video],body:{style:{}}},reducedMotion:{matches:false},box:{open:false},stopVideo(){stopped++},opener:{focus(){focused++}}};
+const context={document:{querySelectorAll:()=>[video],body:{style:{}}},reducedMotion:{matches:false},box:{open:false},clearArtworkURL(){},stopVideo(){stopped++},opener:{focus(){focused++}}};
 runInNewContext(sync,context);
 runInNewContext(onClose,context);
 assert.equal(played,1);assert.equal(stopped,1);assert.equal(focused,1);
