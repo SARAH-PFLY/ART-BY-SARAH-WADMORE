@@ -21,6 +21,27 @@ Deletion removes the manifest entry from the homepage after Pages publishes. Ori
 
 Run `node telegram/delete.test.mjs` to check success, no match, duplicate titles, command syntax, authorization, repeated delivery, concurrent uploads and deletion of the last artwork.
 
+## Publish a blog article
+
+Send a UTF-8 TXT or Markdown document in the bot's private chat with this caption:
+
+/blog Inside my latest painting | Studio notes
+
+Or reply to an existing document with that command. Title is required; category is optional. Only Sarah's configured account can publish. File limit: 256 KB and 60,000 characters. PDF, Word, HTML and binary documents are not supported. The document supplies the finished article: there is no AI rewriting or invented content, and no additional AI credential is required.
+
+Use paragraphs, Markdown headings, bullet lists, blockquotes, bold text, inline code, fenced code and HTTP/HTTPS links. Raw HTML is escaped. Markdown image embedding, tables and arbitrary HTML are intentionally unsupported. A starter file is in examples/blog-template.md; replace its instructions with your own writing before sending it.
+
+The newest gallery image is selected automatically as an optional article cover, using that artwork's title for its alt text. If there is no suitable image, the article uses the text-only layout. Videos are not used as cover images.
+
+Each accepted article atomically creates its own /blog/title-updateid/index.html, updates blog/posts.json and the static blog index, and regenerates sitemap.xml. The homepage BLOG dropdown shows the latest five titles plus View all posts; it works on tap/keyboard and closes on Escape or outside click. The blog index and article bodies remain readable and crawlable without JavaScript.
+
+The article template adds a canonical URL, descriptive title/meta description, Open Graph sharing metadata, published date, author, reading estimate and BlogPosting structured data. Descriptions come from the document's opening text. Search indexing, rankings and the exact Google snippet are not guaranteed. The bot replies with the URL after the Git commit succeeds; wait for GitHub Pages to deploy before opening it.
+
+Repeated Telegram delivery does not duplicate a post. Same-title articles receive distinct URLs; concurrent publishing preserves all articles. Existing /upload and /delete commands still apply to gallery artworks only. Blog editing/deletion is not included.
+
+Run node telegram/blog.test.mjs alongside the other bot tests. Merge the blog pages before deploying the bot. IMPORTANT: the Worker now imports blog.mjs. Upload BOTH worker.mjs and blog.mjs in a multipart Cloudflare deployment, with worker.mjs as main_module; Wrangler bundles the import automatically. Preserve all encrypted secrets and keep traces disabled.
+
+
 ## Activation
 1. Create a new dedicated bot in Telegram through @BotFather using /newbot. Do not reuse a bot serving another application.
 2. Sarah's numeric Telegram user ID is configured as 1019741898.

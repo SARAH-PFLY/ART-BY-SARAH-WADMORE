@@ -1,3 +1,4 @@
+import {parseBlog,makePost,renderArticle,renderIndex,sitemap} from './blog.mjs';
 const LIMIT=8*1024*1024;
 export function hasH264Video(bytes){
  try{
@@ -88,11 +89,59 @@ async function deleteArtwork(update,env,title,say){
  }
 }
 
+async function publishBlog(update,env,details,say){
+ if(details.error){await say(details.error);return}
+ const m=update.message,document=m.document||m.reply_to_message?.document;
+ const fail=text=>say(text);
+ if(!document||!/\.(txt|md|markdown)$/i.test(document.file_name||'')){await fail('Attach a UTF-8 .txt or .md file with /blog Article title | Category as the caption, or reply to the document with that command.');return}
+ const maximum=256*1024;
+ if(document.file_size>maximum){await fail('Blog documents must be under 256 KB.');return}
+ const info=await telegram(env,'getFile',{file_id:document.file_id});
+ const response=await fetch('https://api.telegram.org/file/bot'+env.BOT_TOKEN+'/'+info.file_path);if(!response.ok)throw Error('Document download failed');
+ const reader=response.body.getReader();let total=0;const parts=[];
+ while(true){const {done,value}=await reader.read();if(done)break;total+=value.length;if(total>maximum){await reader.cancel();await fail('Blog documents must be under 256 KB.');return}parts.push(value)}
+ const bytes=new Uint8Array(total);let offset=0;for(const part of parts){bytes.set(part,offset);offset+=part.length}
+ let text;try{text=new TextDecoder('utf-8',{fatal:true}).decode(bytes).trim()}catch{await fail('Please save the document as UTF-8 text and send it again.');return}
+ if(!text||text.length>60000||/[\x00-\x08\x0b\x0c\x0e-\x1f]/.test(text)){await fail('Please send a non-empty text document with at most 60,000 characters.');return}
+ const id=String(update.update_id),date=new Date().toISOString();
+ const readJSON=async(path,head)=>{const file=await gh(env,'contents/'+path+'?ref='+head);return JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(file.content.replace(/\s/g,'')),c=>c.charCodeAt(0))))};
+ for(let attempt=0;attempt<4;attempt++){
+ const ref=await gh(env,'git/ref/heads/main'),head=ref.object.sha;
+ const commit=await gh(env,'git/commits/'+head);
+ const posts=await readJSON('blog/posts.json',head);
+ if(!Array.isArray(posts))throw Error('Invalid blog index');
+ const existing=posts.find(post=>post.id===id);
+ if(existing){await say('Already published: https://sarahwadmore.com'+existing.url);return}
+ const artworks=await readJSON('artworks.json',head);
+ if(!Array.isArray(artworks))throw Error('Invalid artwork manifest');
+ const artwork=artworks.find(work=>typeof work.src==='string'&&/^artworks\/[a-zA-Z0-9_-]+\.(jpg|jpeg|png|webp|gif)$/i.test(work.src));
+ const post=makePost(details,text,id,date,artwork?.src||null);
+ if(artwork)post.coverAlt=artwork.title;
+ const nextPosts=[post,...posts];
+ const outputs=[
+ ['blog/posts.json',JSON.stringify(nextPosts,null,2)+'\n'],
+ ['blog/'+post.slug+'/index.html',renderArticle(post,text,nextPosts)],
+ ['blog/index.html',renderIndex(nextPosts)],
+ ['sitemap.xml',sitemap(nextPosts)]
+ ];
+ const entries=[];
+ for(const [path,content] of outputs){
+ const blob=await gh(env,'git/blobs','POST',{encoding:'base64',content:encode(content)});
+ entries.push({path,mode:'100644',type:'blob',sha:blob.sha});
+ }
+ const tree=await gh(env,'git/trees','POST',{base_tree:commit.tree.sha,tree:entries});
+ const next=await gh(env,'git/commits','POST',{message:'Publish blog article from Telegram',tree:tree.sha,parents:[head]});
+ try{await gh(env,'git/refs/heads/main','PATCH',{sha:next.sha,force:false})}catch(error){if(attempt<3&&/^GitHub (409|422) /.test(error.message))continue;throw error}
+ await say('Article saved: '+post.title+'\nhttps://sarahwadmore.com'+post.url+'\nThe URL and BLOG menu update after GitHub Pages finishes publishing.');return;
+ }
+}
+
 async function handle(update,env){
  const m=update.message;if(!m||m.chat.type!=='private'||String(m.from?.id)!==env.SARAH_USER_ID)return;
  const say=text=>telegram(env,'sendMessage',{chat_id:m.chat.id,text});
  const text=m.caption||m.text||'';
- if(/^\/(start|help)(?:@\w+)?(?:\s|$)/i.test(text)){await say('Send one photo, GIF or MP4 video with this caption:\n/upload Artwork title | Medium | Dimensions\nOr reply with that command to the media. JPEG, PNG, WebP, GIF and MP4 files are supported (maximum 8 MB per file). For best video compatibility use H.264 video with AAC audio.\nRemove an artwork: /delete Artwork title (title only).');return}
+ if(/^\/(start|help)(?:@\w+)?(?:\s|$)/i.test(text)){await say('Send one photo, GIF or MP4 video with this caption:\n/upload Artwork title | Medium | Dimensions\nOr reply with that command to the media. JPEG, PNG, WebP, GIF and MP4 files are supported (maximum 8 MB per file). For best video compatibility use H.264 video with AAC audio.\nRemove an artwork: /delete Artwork title (title only).\nPublish TXT/Markdown: /blog Article title | Category (document caption or reply).');return}
+ const blogDetails=parseBlog(text);if(blogDetails!==null){await publishBlog(update,env,blogDetails,say);return}
  const titleToDelete=deleteTitle(text);if(titleToDelete!==null){await deleteArtwork(update,env,titleToDelete,say);return}
  const details=parse(text);if(!details){await say('Use /upload Artwork title | Medium | Dimensions as the media caption, or reply to the media with that command.');return}
  const media=m.photo||m.animation||m.video||m.document?m:m.reply_to_message;
