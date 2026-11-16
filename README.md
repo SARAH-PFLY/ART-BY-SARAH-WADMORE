@@ -18,6 +18,17 @@ That same month, **SYNC Network** named **Sarah PU51FLY** among the artists cont
 
 Today, Sarah’s work connects her longstanding art practice with digital ownership, character creation and collective storytelling. Through her individual artwork and the Crypto Moongirls, she continues to build a creative identity rooted in the Graffiti Kings community.
 
+## Graffiti Queens — exhibition coverage
+
+Contemporary reporting and participating artists’ accounts place Graffiti Queens in Decentraland’s Vegas City and document its women-led exhibition programme, Graffiti Kings’ involvement and Crypto Yuna’s curatorial role.
+
+- [Crypto Briefing — Graffiti Queens exhibition announcement (27 March 2021)](https://cryptobriefing.com/pussy-riot-talk-nfts-ahead-major-graffiti-queens-expo/)
+- [Art Rights — Women Crypto Artists / Graffiti Queens (7 April 2021)](https://www.artrights.me/en/women-crypto-artists/)
+- [Soul’D — participating artist’s Graffiti Queens account (16 April 2021)](https://sould-art.com/blog/nft-graffiti-queens)
+- [Agora Digital Art — NFTs in Digital Art: Tokens or Tokenism? (28 April 2021)](https://agoradigital.art/blog-nfts-in-digital-art-tokens-or-tokenism/)
+- [NBC News — Decentraland reporting linked from Soul’D’s exhibition account](https://www.nbcnews.com/tech/tech-news/welcome-decentraland-nfts-meet-virtual-world-rcna553)
+- [Bitcoinlive — exhibition video linked from Soul’D’s account](https://www.youtube.com/watch?ab_channel=Bitcoinlive&v=HU31y39kaS4)
+
 ## WAX artworks and the Charlie Buster collaboration
 
 Sarah’s NFT work extends across her OpenSea collection and the **SARAH PU51FLY** collection on the WAX blockchain. The WAX collection identifier is **yomypu512fly**, its author account is **sarahpu51fly**, and its collection record was created on **27 June 2021**. The collection’s metadata identifies her as a Graffiti Kings artist.
@@ -50,9 +61,7 @@ These pages expand the character’s fictional setting; they do not establish ad
 
 ## Collections and archive
 
-- [Graffiti Queens — contemporary exhibition coverage](https://cryptobriefing.com/pussy-riot-talk-nfts-ahead-major-graffiti-queens-expo/)
 - [SYNC Network — Sarah PU51FLY exhibition announcement, April 2021](https://medium.com/sync-network/sync-network-nft-exposition-in-decentraland-with-graffiti-kings-e84c2631b154)
-- [Graffiti Queens — participating artist Soul’D’s account](https://sould-art.com/blog/nft-graffiti-queens)
 - [Crypto Moongirls — Queen Sarah P-fly project lore](https://graffpunks.substack.com/p/the-crypto-moongirls-cosmic-dreamers)
 - [Sarah PU51FLY — OpenSea collection](https://opensea.io/collection/sarah-pu51fly)
 
