@@ -1,0 +1,7 @@
+.telegram-mini-app body{box-sizing:border-box;min-height:var(--app-height,100dvh);padding:var(--app-safe-top,0px) var(--app-safe-right,0px) var(--app-safe-bottom,0px) var(--app-safe-left,0px)}
+.telegram-mini-app #lightbox{box-sizing:border-box;height:var(--app-height,100dvh);padding:var(--app-safe-top,0px) var(--app-safe-right,0px) var(--app-safe-bottom,0px) var(--app-safe-left,0px)}
+.telegram-mini-app #lightbox .controls{top:calc(16px + var(--app-safe-top,0px));right:calc(16px + var(--app-safe-right,0px))}
+.telegram-mini-app #lightbox #detail{bottom:calc(20px + var(--app-safe-bottom,0px))}
+.telegram-mini-app #lightbox .prev{left:calc(14px + var(--app-safe-left,0px))}
+.telegram-mini-app #lightbox .next{right:calc(14px + var(--app-safe-right,0px))}
+@media(max-width:650px){.telegram-mini-app #lightbox .prev,.telegram-mini-app #lightbox .next{bottom:calc(18px + var(--app-safe-bottom,0px))}}
