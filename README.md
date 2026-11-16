@@ -18,6 +18,14 @@ That same month, **SYNC Network** named **Sarah PU51FLY** among the artists cont
 
 Today, Sarah’s work connects her longstanding art practice with digital ownership, character creation and collective storytelling. Through her individual artwork and the Crypto Moongirls, she continues to build a creative identity rooted in the Graffiti Kings community.
 
+## WAX artworks and the Charlie Buster collaboration
+
+Sarah’s NFT work extends across her OpenSea collection and the **SARAH PU51FLY** collection on the WAX blockchain. The WAX collection identifier is **yomypu512fly**, its author account is **sarahpu51fly**, and its collection record was created on **27 June 2021**. The collection’s metadata identifies her as a Graffiti Kings artist.
+
+Her collaboration with **Charlie Buster**, **“Dropping Bomb’s”**, is recorded in his **noballgamess** collection. WAX template **412225**, created on **14 January 2022**, credits both artists and has a maximum edition of **377**. These records document an artwork collaboration, separate from the fictional stories attached to the wider project.
+
+Collection and template details can be checked against the [WAX collection record](https://wax.api.atomicassets.io/atomicassets/v1/collections/yomypu512fly) and [Dropping Bomb’s template record](https://wax.api.atomicassets.io/atomicassets/v1/templates/noballgamess/412225).
+
 ## Queen Sarah PFLY — the fictional ruler of Block Topia
 
 Queen Sarah PFLY is Sarah’s character within the **Crypto Moonboys** universe. In *The Hard Fork – Rise of the HODL Warriors*, she leads the **Crypto Moongirls**, the ruling order of **Block Topia**, a fortified city built amid the collapse of a blockchain-connected world.
@@ -32,6 +40,14 @@ The arrival of **NULL THE PROPHET** and the **Echo Fork** threatens the reality 
 
 [Read The Hard Fork – Rise of the HODL Warriors](https://graffpunks.substack.com/p/the-hard-fork-rise-of-the-hodl-warriors).
 
+### Her place in the project archives
+
+The Graffiti Kings profile connects Sarah’s artist identity with **Graffiti Queens**, her **Queen Sarah P-fly** avatar, **City Block Topia** and **Crypto Moongirls Eternal**. It presents the character as part of the project’s wider approach to cultural memory, community and world-building.
+
+The Crypto Moonboys character archive places the Queen in **Year 3008**, exploring her control of the systems that keep Block Topia functioning and the freedoms that her rule restricts. It also distinguishes between different accounts of her origins, titles and authority rather than treating every version as a single settled history.
+
+These pages expand the character’s fictional setting; they do not establish additional personal history about Sarah herself.
+
 ## Collections and archive
 
 - [Graffiti Queens — contemporary exhibition coverage](https://cryptobriefing.com/pussy-riot-talk-nfts-ahead-major-graffiti-queens-expo/)
@@ -39,6 +55,12 @@ The arrival of **NULL THE PROPHET** and the **Echo Fork** threatens the reality 
 - [Graffiti Queens — participating artist Soul’D’s account](https://sould-art.com/blog/nft-graffiti-queens)
 - [Crypto Moongirls — Queen Sarah P-fly project lore](https://graffpunks.substack.com/p/the-crypto-moongirls-cosmic-dreamers)
 - [Sarah PU51FLY — OpenSea collection](https://opensea.io/collection/sarah-pu51fly)
+
+- [Queen Sarah PFLY — GKniftyHEADS Fandom wiki](https://gkniftyheads.fandom.com/wiki/Queen_Sarah_PFly)
+- [Sarah PU51FLY — WAX collection on NFTHive](https://nfthive.io/collection/yomypu512fly)
+- [Dropping Bomb’s — Sarah PU51FLY × Charlie Buster on AtomicHub](https://wax.atomichub.io/explorer/template/wax-mainnet/noballgamess/Dropping-Bombs-By-SARAH-PU51FLY-x-Charlie-Buster_412225)
+- [Queen Sarah P-fly — Crypto Moonboys character archive](https://cryptomoonboys.com/wiki/queen-sarah-p-fly.html)
+- [Sarah PU51FLY — Graffiti Kings artist and character profile](https://graffitikings.com/characters/sarah-pu51fly.html)
 
 Career dates, Crypto Moongirls founding history, Sarah’s curatorial contribution and flyer-design credit were supplied by the project team. Contemporary sources above document the exhibition and Sarah’s involvement in the early NFT scene. Queen Sarah PFLY is a fictional character, distinct from Sarah’s real-world biography.
 
