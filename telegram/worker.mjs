@@ -51,11 +51,49 @@ const encode=text=>b64(new TextEncoder().encode(text));
 async function equal(a,b){const hash=async s=>new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s)));const x=await hash(a),y=await hash(b);return x.reduce((v,n,i)=>v|(n^y[i]),0)===0}
 async function telegram(env,method,body){const r=await fetch('https://api.telegram.org/bot'+env.BOT_TOKEN+'/'+method,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const data=await r.json();if(!r.ok||!data.ok)throw Error('Telegram request failed');return data.result}
 async function gh(env,path,method='GET',body){const r=await fetch('https://api.github.com/repos/'+env.REPO+(path?'/'+path:''),{method,headers:{Authorization:'Bearer '+env.GITHUB_TOKEN,Accept:'application/vnd.github+json','User-Agent':'SarahArtworkUploader','Content-Type':'application/json'},body:body?JSON.stringify(body):undefined});if(!r.ok)throw Error('GitHub '+r.status+' '+method+' '+path);return r.json()}
+export function deleteTitle(text=''){
+ const match=text.match(/^\/delete(?:@\w+)?(?:\s+([\s\S]*))?$/i);
+ return match?(match[1]||'').trim():null;
+}
+const normalizeTitle=value=>String(value).normalize('NFKC').trim().replace(/\s+/g,' ').toLowerCase();
+async function deleteArtwork(update,env,title,say){
+ if(!title||title.length>200){await say('Use /delete Artwork title (title only, without medium or dimensions).');return}
+ const id=String(update.update_id);let target=null;
+ for(let attempt=0;attempt<4;attempt++){
+ const ref=await gh(env,'git/ref/heads/main'),head=ref.object.sha;
+ const commit=await gh(env,'git/commits/'+head);
+ const decode=file=>JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(file.content.replace(/\s/g,'')),c=>c.charCodeAt(0))));
+ const list=decode(await gh(env,'contents/artworks.json?ref='+head));
+ let deleted=[];
+ try{deleted=decode(await gh(env,'contents/telegram/deletions.json?ref='+head))}catch(error){if(!/^GitHub 404 /.test(error.message))throw error}
+ if(!Array.isArray(list)||!Array.isArray(deleted))throw Error('Invalid manifest');
+ if(deleted.some(entry=>entry.updateId===id)){await say('This delete command has already been completed.');return}
+ const matches=list.filter(work=>normalizeTitle(work.title)===normalizeTitle(title));
+ if(!matches.length){await say('No artwork found with that exact title: '+title);return}
+ if(matches.length>1){await say('More than one artwork has that title. Nothing deleted. Rename duplicate titles before using /delete.');return}
+ const match=matches[0],identity=JSON.stringify([match.uploadId||null,match.src]);
+ if(target!==null&&target!==identity){await say('That artwork changed while deleting. Nothing deleted. Please check the title and try again.');return}
+ target=identity;
+ const remaining=list.filter(work=>work!==match);
+ const ledger=[...deleted,{updateId:id,uploadId:match.uploadId||null,title:match.title,src:match.src,deletedAt:new Date().toISOString()}];
+ const entries=[];
+ for(const [path,value] of [['artworks.json',remaining],['telegram/deletions.json',ledger]]){
+ const blob=await gh(env,'git/blobs','POST',{encoding:'base64',content:encode(JSON.stringify(value,null,2)+'\n')});
+ entries.push({path,mode:'100644',type:'blob',sha:blob.sha});
+ }
+ const tree=await gh(env,'git/trees','POST',{base_tree:commit.tree.sha,tree:entries});
+ const next=await gh(env,'git/commits','POST',{message:'Remove artwork from gallery via Telegram',tree:tree.sha,parents:[head]});
+ try{await gh(env,'git/refs/heads/main','PATCH',{sha:next.sha,force:false})}catch(error){if(attempt<3&&/^GitHub (409|422) /.test(error.message))continue;throw error}
+ await say('Removed from gallery: '+match.title+'\nThe website will update after GitHub Pages finishes publishing.');return;
+ }
+}
+
 async function handle(update,env){
  const m=update.message;if(!m||m.chat.type!=='private'||String(m.from?.id)!==env.SARAH_USER_ID)return;
  const say=text=>telegram(env,'sendMessage',{chat_id:m.chat.id,text});
  const text=m.caption||m.text||'';
- if(/^\/(start|help)(?:@\w+)?(?:\s|$)/i.test(text)){await say('Send one photo, GIF or MP4 video with this caption:\n/upload Artwork title | Medium | Dimensions\nOr reply with that command to the media. JPEG, PNG, WebP, GIF and MP4 files are supported (maximum 8 MB per file). For best video compatibility use H.264 video with AAC audio.');return}
+ if(/^\/(start|help)(?:@\w+)?(?:\s|$)/i.test(text)){await say('Send one photo, GIF or MP4 video with this caption:\n/upload Artwork title | Medium | Dimensions\nOr reply with that command to the media. JPEG, PNG, WebP, GIF and MP4 files are supported (maximum 8 MB per file). For best video compatibility use H.264 video with AAC audio.\nRemove an artwork: /delete Artwork title (title only).');return}
+ const titleToDelete=deleteTitle(text);if(titleToDelete!==null){await deleteArtwork(update,env,titleToDelete,say);return}
  const details=parse(text);if(!details){await say('Use /upload Artwork title | Medium | Dimensions as the media caption, or reply to the media with that command.');return}
  const media=m.photo||m.animation||m.video||m.document?m:m.reply_to_message;
  const file=media?.photo?.at(-1)||media?.animation||media?.video||media?.document;
@@ -79,6 +117,10 @@ async function handle(update,env){
  const manifest=await gh(env,'contents/artworks.json?ref='+head);
  const list=JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(manifest.content.replace(/\s/g,'')),c=>c.charCodeAt(0))));
  if(!Array.isArray(list))throw Error('Invalid artwork manifest');
+ let tombstones=[];
+ try{const file=await gh(env,'contents/telegram/deletions.json?ref='+head);tombstones=JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(file.content.replace(/\s/g,'')),c=>c.charCodeAt(0))))}catch(error){if(!/^GitHub 404 /.test(error.message))throw error}
+ if(!Array.isArray(tombstones))throw Error('Invalid deletion ledger');
+ if(tombstones.some(entry=>entry.uploadId===id||entry.src===path)){await say('This upload was deleted and will not be republished. Send the media again as a new message to upload it again.');return}
  if(list.some(w=>w.uploadId===id)){await say('This upload is already saved.');return}
  const entry={...details,src:path,type,animated:!!(detected.animated||media.animation),uploadId:id,uploadedAt:new Date().toISOString()};
  const image=await gh(env,'git/blobs','POST',{encoding:'base64',content:b64(bytes)});
