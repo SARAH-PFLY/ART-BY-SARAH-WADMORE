@@ -1,0 +1,28 @@
+const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
+const code=fs.readFileSync(__dirname+'/../assets/native-share.js','utf8');
+const create=(nav,fetch)=>{const root={navigator:nav,fetch,File,AbortController,URL,Promise};vm.runInNewContext(code,root);return root.createArtworkFileShare};
+const work={title:'Original artwork',src:'artworks/original.jpg',thumbnail:'artworks/small.jpg'};
+(async()=>{
+ let states=[],messages=[],shared,caption='Edited caption + artwork link',fetches=[];
+ const nav={canShare:data=>!!data.files,share:data=>{shared=data;return Promise.resolve()}};
+ const make=create(nav,async(url)=>{fetches.push(url);return new Response(new Blob(['original-image-data'],{type:'image/jpeg'}))});
+ const controller=make({getCaption:()=>caption,onState:s=>states.push(s),onMessage:m=>messages.push(m)});
+ await controller.prepare(work,'https://sarahwadmore.com/?art=42');
+ assert.equal(states.at(-1),'ready');assert.equal(fetches[0],'https://sarahwadmore.com/artworks/original.jpg');
+ caption='Changed after preparing';controller.share();
+ assert.equal(shared.text,caption);assert.equal(shared.files[0].name,'original.jpg');assert.equal(await shared.files[0].text(),'original-image-data');assert.equal(fetches.length,1);
+ await new Promise(r=>setImmediate(r));
+ controller.cancel();shared=null;controller.share();assert.equal(shared,null);
+ let downloaded=false,unsupportedShared;
+ const unsupported=create({share:data=>{unsupportedShared=data;return Promise.resolve()}},async()=>{downloaded=true});
+ const fallback=unsupported({getCaption:()=>caption,onState:s=>states.push(s),onMessage:m=>messages.push(m)});
+ await fallback.prepare(work,'https://sarahwadmore.com/');assert.equal(downloaded,false);assert.equal(states.at(-1),'unsupported');
+ fallback.share();assert.equal(unsupportedShared.text,caption);assert.equal(unsupportedShared.files,undefined);
+ const failed=create(nav,async()=>{throw Error('offline')})({getCaption:()=>caption,onState:s=>states.push(s),onMessage:m=>messages.push(m)});
+ await failed.prepare(work,'https://sarahwadmore.com/');assert.equal(states.at(-1),'unavailable');
+ let release;const delayed=create(nav,()=>new Promise(r=>release=r))({getCaption:()=>caption,onState:s=>states.push(s),onMessage:m=>messages.push(m)});
+ const pending=delayed.prepare(work,'https://sarahwadmore.com/');delayed.cancel();release(new Response(new Blob(['image'])));await pending;assert.equal(states.at(-1),'idle');
+ let unrelated=false;const safe=create(nav,async()=>{unrelated=true})({getCaption:()=>caption,onState:()=>{},onMessage:()=>{}});
+ await safe.prepare({...work,src:'https://elsewhere.test/image.jpg'},'https://sarahwadmore.com/');assert.equal(unrelated,false);
+ console.log('Original file + edited caption, synchronous handoff, unsupported fallback, download failure, cancellation and stale-response safety passed');
+})().catch(e=>{console.error(e);process.exit(1)});
