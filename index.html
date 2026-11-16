@@ -106,13 +106,30 @@ sharePanel.innerHTML="<div class=\"share-head\"><div><p class=\"share-eyebrow\">
 box.append(sharePanel);
 const platformSelect=sharePanel.querySelector('#share-platform'),captionInput=sharePanel.querySelector('#share-caption'),shareFeedback=sharePanel.querySelector('#share-feedback');
 let shareWork,shareURL;
+function xCaptionWeight(text){
+ // Conservative weighted count; links reserve X's fixed 23-character budget.
+ return Array.from(text.replace(/https?:\/\/\S+/g,'xxxxxxxxxxxxxxxxxxxxxxx')).reduce((n,c)=>n+(c.codePointAt(0)>4351?2:1),0);
+}
 function makeShareCaption(work,platform,url){
  const title=work.title.trim()||'Artwork by Sarah Wadmore';
  const medium=work.medium?'Medium / artist notes: '+work.medium+'\n\n':'';
  if(platform==='x'){
- // ASCII keeps the standard X weighted character budget predictable.
- const shortTitle=title.replace(/[^\x20-\x7E]/g,'').trim().slice(0,38)||'Explore the artwork';
- return shortTitle+' — Sarah Wadmore (PFLY / PU51FLY), Graffiti Kings artist and Crypto Moongirls creator. Discover her artwork, digital collections and creative world. #SarahWadmore #PFLY\n'+url;
+ // Preserve the artist's exact title, including emoji and punctuation.
+ // Shorten the biography first; never silently cut an artwork title.
+ const descriptions=[
+ 'Sarah Wadmore (PFLY / PU51FLY), Graffiti Kings artist and Crypto Moongirls creator. Discover her artwork, digital collections and creative world. #SarahWadmore #PFLY',
+ 'Sarah Wadmore (PFLY / PU51FLY), Graffiti Kings artist and Crypto Moongirls creator. Explore her artwork and creative world. #SarahWadmore',
+ 'Sarah Wadmore (PFLY / PU51FLY), Graffiti Kings artist and Crypto Moongirls creator. #SarahWadmore',
+ 'Art by Sarah Wadmore (PFLY / PU51FLY). #SarahWadmore',
+ 'Art by Sarah Wadmore',
+ ''
+ ];
+ for(const description of descriptions){
+ const caption=title+(description?'\n\n'+description:'')+'\n'+url;
+ if(xCaptionWeight(caption)<=280)return caption;
+ }
+ // An unusually long title stays intact; the existing counter asks the user to edit.
+ return title+'\n'+url;
  }
  const intro=platform==='instagram'?'Meet the artist behind the artwork.':platform==='tiktok'?'Art, characters and a creative world: meet Sarah PFLY.':'Discover Sarah Wadmore and the creative world behind her artwork.';
  return intro+'\n\n'+title+'\n\n'+medium+
@@ -125,8 +142,7 @@ function makeShareCaption(work,platform,url){
 }
 function shareLength(){
  if(platformSelect.value==='x'){
- const withoutURL=captionInput.value.replace(/https?:\/\/\S+/g,'xxxxxxxxxxxxxxxxxxxxxxx');
- return Array.from(withoutURL).reduce((n,c)=>n+(c.codePointAt(0)>4351?2:1),0);
+ return xCaptionWeight(captionInput.value);
  }
  return captionInput.value.length;
 }
