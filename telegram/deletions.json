@@ -6,5 +6,12 @@
     "src": "artworks/telegram-166307850.jpg",
     "deletedAt": "2026-11-16T05:23:20.929Z",
     "reason": "Remove later duplicate title; retain original upload 166307849"
+  },
+  {
+    "updateId": "166307853",
+    "uploadId": "166307849",
+    "title": "CB",
+    "src": "artworks/telegram-166307849.jpg",
+    "deletedAt": "2026-11-16T09:39:05.815Z"
   }
 ]
