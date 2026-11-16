@@ -97,7 +97,7 @@ function render(){
  layoutWall();
 }
 function show(index){current=(index+works.length)%works.length;const work=works[current];setArtworkURL();mediaStatus.textContent='Loading artwork…';stopVideo();full.hidden=isVideo(work);if(isVideo(work)){full.removeAttribute('src');fullVideo.hidden=false;fullVideo.src=work.src;fullVideo.setAttribute('aria-label',work.title);fullVideo.loop=!!work.animated;fullVideo.muted=!!work.animated;fullVideo.load();if(work.animated&&!reducedMotion.matches)fullVideo.play().catch(()=>{})}else{full.src=work.src;full.alt=work.title}detail.replaceChildren(document.createTextNode(work.title));const meta=document.createElement('span');meta.textContent=(current+1)+' / '+works.length+(work.demo?' · Layout placeholder':work.medium?' · '+work.medium:'');detail.append(meta)}
-async function closeViewer(){if(document.fullscreenElement&&document.exitFullscreen)await document.exitFullscreen().catch(()=>{});box.close()}
+async function closeViewer(){if(window.__sarahMiniApp)window.__sarahMiniApp.exitFullscreen();else if(document.fullscreenElement&&document.exitFullscreen)await document.exitFullscreen().catch(()=>{});box.close()}
 document.querySelector('#close').onclick=closeViewer;
 box.addEventListener('close',()=>{stopVideo();clearArtworkURL();document.body.style.overflow='';syncPreviews();opener?.focus()});
 box.addEventListener('cancel',event=>{event.preventDefault();closeViewer()});
@@ -107,7 +107,7 @@ box.addEventListener('touchstart',event=>{if(event.target===fullVideo){startX=nu
 box.addEventListener('touchend',event=>{if(startX===null||event.target===fullVideo)return;const dx=event.changedTouches[0].clientX-startX,dy=event.changedTouches[0].clientY-startY;if(Math.abs(dx)>60&&Math.abs(dx)>Math.abs(dy)*1.5)show(current+(dx<0?1:-1))},{passive:true});
 const expand=document.querySelector('#expand');
 if(!document.documentElement.requestFullscreen)expand.hidden=true;
-expand.onclick=async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen()}catch{expand.hidden=true}};
+expand.onclick=async()=>{if(window.__sarahMiniApp){window.__sarahMiniApp.toggleFullscreen();return}try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen()}catch{mediaStatus.textContent='Fullscreen is not available in this browser.'}};
 document.querySelector('#year').textContent=new Date().getFullYear();
 async function init(){
  galleryStatus.textContent='Loading artworks…';
