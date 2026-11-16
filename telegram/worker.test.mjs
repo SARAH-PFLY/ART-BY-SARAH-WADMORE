@@ -36,6 +36,7 @@ async function run(message,body){
  if(url.endsWith('/sendMessage')){reply=data.text;return json({ok:true,result:{}})}
  if(url.endsWith('/git/ref/heads/main'))return json({object:{sha:'head'}});
  if(url.endsWith('/git/commits/head'))return json({tree:{sha:'base'}});
+ if(url.includes('/contents/telegram/deletions.json'))return Response.json({message:'Not found'},{status:404});
  if(url.includes('/contents/artworks.json'))return json({content:btoa(JSON.stringify([{title:'Existing',src:'existing.jpg'}]))});
  if(url.endsWith('/git/blobs')){if(data.encoding==='base64'){const decoded=atob(data.content);if(decoded.startsWith('['))saved=JSON.parse(new TextDecoder().decode(Uint8Array.from(decoded,c=>c.charCodeAt(0))))}return json({sha:'blob'})}
  if(url.endsWith('/git/trees')){tree=data;return json({sha:'tree'})}
