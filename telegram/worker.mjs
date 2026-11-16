@@ -46,6 +46,7 @@ export function detectMedia(bytes){
  return null;
 }
 
+export const BLOG_TEMPLATE="/blog #streetartist #SarahPFLY Wadmore 🌷🌹🌻| 👁 | 🌼🌸🌺";
 export const TITLE_LIMIT=36;
 export const UPLOAD_TEMPLATE="/upload #streetartist #SarahPFLY Wadmore 🌷🌹🌻| 👁 | 🌼🌸🌺";
 const titleSegments=new Intl.Segmenter('en',{granularity:'grapheme'});
@@ -172,11 +173,15 @@ async function handle(update,env){
 
  const say=text=>telegram(env,'sendMessage',{chat_id:m.chat.id,text});
  const text=m.caption||m.text||'';
+ if(/^\/bbb(?:@\w+)?(?:\s|$)/i.test(text)){
+ await telegram(env,'sendMessage',{chat_id:m.chat.id,text:'<code>'+BLOG_TEMPLATE.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</code>',parse_mode:'HTML'});
+ return;
+ }
  if(/^\/xxx(?:@\w+)?(?:\s|$)/i.test(text)){
  await telegram(env,'sendMessage',{chat_id:m.chat.id,text:'<code>'+UPLOAD_TEMPLATE.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</code>',parse_mode:'HTML'});
  return;
  }
- if(/^\/(start|help)(?:@\w+)?(?:\s|$)/i.test(text)){await say('Type /xxx for Sarah’s ready-to-copy upload template.\nSend one photo, GIF or MP4 video with this caption:\n/upload Artwork title | Medium | Dimensions\nTitle: maximum 36 characters, including spaces and emoji. Medium and dimensions go after |.\nExample with a 36-character title:\n'+UPLOAD_TEMPLATE+'\nOr reply with that command to the media. JPEG, PNG, WebP, GIF and MP4 files are supported (maximum 8 MB per file). For best video compatibility use H.264 video with AAC audio.\nRemove an artwork: /delete Artwork title (title only).\nPublish TXT/Markdown: /blog Article title | Category (document caption or reply).\nOpen gallery: /app\nConfigure Mini App launch menu: /miniapp');return}
+ if(/^\/(start|help)(?:@\w+)?(?:\s|$)/i.test(text)){await say('Type /xxx for Sarah’s ready-to-copy upload template.\nType /bbb for Sarah’s ready-to-copy blog template.\nSend one photo, GIF or MP4 video with this caption:\n/upload Artwork title | Medium | Dimensions\nTitle: maximum 36 characters, including spaces and emoji. Medium and dimensions go after |.\nExample with a 36-character title:\n'+UPLOAD_TEMPLATE+'\nOr reply with that command to the media. JPEG, PNG, WebP, GIF and MP4 files are supported (maximum 8 MB per file). For best video compatibility use H.264 video with AAC audio.\nRemove an artwork: /delete Artwork title (title only).\nPublish TXT/Markdown: /blog Article title | Category (document caption or reply).\nOpen gallery: /app\nConfigure Mini App launch menu: /miniapp');return}
  const blogDetails=parseBlog(text);if(blogDetails!==null){await publishBlog(update,env,blogDetails,say);return}
  const titleToDelete=deleteTitle(text);if(titleToDelete!==null){await deleteArtwork(update,env,titleToDelete,say);return}
  const uploadMatch=text.match(/^\/upload(?:@\w+)?\s+([\s\S]+)$/i);
