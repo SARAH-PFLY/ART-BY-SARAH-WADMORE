@@ -1,0 +1,16 @@
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {runInNewContext} from 'node:vm';
+const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');
+const sync=html.match(/function syncPreviews\(\)\{[\s\S]*?\n\}/)[0];
+const onClose=html.match(/box.addEventListener\('close',\(\)=>\{([^\n]+)\}\);/)[1];
+let played=0,paused=0,stopped=0,focused=0;
+const video={dataset:{visible:'true'},play(){played++;return Promise.resolve()},pause(){paused++}};
+const context={document:{querySelectorAll:()=>[video],body:{style:{}}},reducedMotion:{matches:false},box:{open:false},stopVideo(){stopped++},opener:{focus(){focused++}}};
+runInNewContext(sync,context);
+runInNewContext(onClose,context);
+assert.equal(played,1);assert.equal(stopped,1);assert.equal(focused,1);
+context.reducedMotion.matches=true;runInNewContext(onClose,context);assert.equal(played,1);assert.equal(paused,1);
+context.reducedMotion.matches=false;video.dataset.visible='false';runInNewContext(onClose,context);assert.equal(played,1);assert.equal(paused,2);
+video.dataset.visible='true';context.box.open=true;runInNewContext('syncPreviews()',context);assert.equal(played,1);assert.equal(paused,3);
+console.log('Passed animation close/resume, reduced motion, offscreen and modal-open checks');
