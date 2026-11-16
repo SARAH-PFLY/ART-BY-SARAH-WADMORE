@@ -7,12 +7,12 @@
 <style>
 *{box-sizing:border-box}body{margin:0;background:#000;color:#fff;font-family:Arial,Helvetica,sans-serif}button{font:inherit;color:inherit;cursor:pointer}button:focus-visible,a:focus-visible{outline:3px solid #fff;outline-offset:-5px}
 header{height:76px;padding:0 28px;display:flex;align-items:center;justify-content:space-between;background:#000;color:#fff}h1{font-size:18px;letter-spacing:-.6px;margin:0}h1 small{display:block;text-transform:uppercase;font-size:9px;letter-spacing:2.7px;margin-bottom:5px}header p{font-size:11px;letter-spacing:1.5px;text-transform:uppercase}
-#wall{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:auto;align-items:start;gap:0}
-.tile{padding:0;border:0;position:relative;overflow:hidden;background:transparent;min-width:0}
+#wall{position:relative;width:100%}
+.tile{position:absolute;display:block;padding:0;border:0;overflow:hidden;background:transparent;min-width:0}
 .tile img,.tile video{width:100%;height:auto;object-fit:contain;object-position:center;display:block}.caption{position:absolute;inset:auto 0 0;padding:40px 18px 17px;text-align:left;background:transparent;text-shadow:0 1px 4px #000;opacity:0;transition:opacity .2s;font-size:12px}.tile:hover .caption,.tile:focus-visible .caption{opacity:1}.demo{position:absolute;top:12px;left:12px;background:#0008;padding:5px 7px;font-size:9px;letter-spacing:1px}
 footer{padding:22px 28px;background:#000;color:#aaa;font-size:11px;display:flex;justify-content:space-between;gap:20px}
 dialog{position:fixed;inset:0;width:100%;max-width:none;height:100dvh;max-height:none;margin:0;padding:0;border:0;background:#000;color:#fff}dialog::backdrop{background:#000}.viewer{height:100%;display:flex;align-items:center;justify-content:center;padding:68px 70px 80px}.viewer img,.viewer video{width:100%;height:100%;object-fit:contain;user-select:none}.controls{position:absolute;top:16px;right:16px;display:flex;gap:8px}.control{background:#222c;border:1px solid #666;border-radius:50%;width:44px;height:44px;font-size:24px}.prev,.next{position:absolute;top:calc(50% - 22px)}.prev{left:14px}.next{right:14px}#detail{position:absolute;bottom:20px;left:24px;right:24px;text-align:center;font-size:12px;line-height:1.7}#detail span{display:block;color:#aaa;font-size:11px}
-@media(max-width:650px){header{height:65px;padding:0 16px}h1{font-size:15px}header p{font-size:9px;letter-spacing:.5px}#wall{grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:auto}.viewer{padding:76px 12px 105px}.prev,.next{top:auto;bottom:18px}.caption{display:none}footer{padding:20px 16px;flex-direction:column;gap:8px}.demo{font-size:8px;left:8px;top:8px}}
+@media(max-width:650px){header{height:65px;padding:0 16px}h1{font-size:15px}header p{font-size:9px;letter-spacing:.5px}.viewer{padding:76px 12px 105px}.prev,.next{top:auto;bottom:18px}.caption{display:none}footer{padding:20px 16px;flex-direction:column;gap:8px}.demo{font-size:8px;left:8px;top:8px}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 [hidden]{display:none!important}.play-badge{position:absolute;inset:50% auto auto 50%;transform:translate(-50%,-50%);background:#0009;border:1px solid #fff8;border-radius:50%;width:48px;height:48px;display:grid;place-items:center;pointer-events:none}.tile video{pointer-events:none}
 header nav{font-size:12px}.blog-menu{position:relative}.blog-menu summary{cursor:pointer;list-style:none;letter-spacing:1.5px;padding:14px 0}.blog-menu summary:after{content:'⌄';margin-left:8px}.blog-menu[open]>div{display:block}.blog-menu>div{position:absolute;right:0;top:100%;z-index:20;background:#000;color:#fff;width:min(330px,85vw);box-shadow:0 12px 35px #0002;border:1px solid #deded6;padding:12px}.blog-menu>div a{display:block;padding:13px;text-decoration:none;line-height:1.4}.blog-menu>div a:hover{background:#191919}
@@ -40,15 +40,18 @@ reducedMotion.addEventListener('change',syncPreviews);
 let works=[],current=0,opener=null,startX=0,startY=0;
 
 const galleryStatus=document.querySelector('#gallery-status'),mediaStatus=document.querySelector('#media-status');
-function wallLayout(count,columns){
- return Array.from({length:count},(_,index)=>({column:index%columns+1,row:Math.floor(index/columns)+1,span:1}));
+function wallLayout(heights,columns){
+ const bottoms=Array(columns).fill(0);
+ return heights.map(height=>{const column=bottoms.indexOf(Math.min(...bottoms)),top=bottoms[column];bottoms[column]+=height;return {column,top,height}});
 }
 function layoutWall(){
  const columns=Math.min(works.length,window.matchMedia('(max-width:650px)').matches?2:3);
- if(!columns)return;
- wall.style.gridTemplateColumns='repeat('+columns+',minmax(0,1fr))';
- const layout=wallLayout(works.length,columns);
- wall.querySelectorAll('.tile').forEach((tile,index)=>{const item=layout[index];tile.style.gridColumn=String(item.column);tile.style.gridRow=item.row+' / span '+item.span});
+ if(!columns){wall.style.height='0px';return}
+ const tiles=Array.from(wall.querySelectorAll('.tile')),width=wall.clientWidth/columns;
+ const heights=tiles.map(tile=>{const media=tile.querySelector('img,video');const w=media.naturalWidth||media.videoWidth||1,h=media.naturalHeight||media.videoHeight||1;return width*h/w});
+ const layout=wallLayout(heights,columns);
+ tiles.forEach((tile,index)=>{const item=layout[index];tile.style.width=width+'px';tile.style.height=item.height+'px';tile.style.left=item.column*width+'px';tile.style.top=item.top+'px'});
+ wall.style.height=Math.max(0,...layout.map(item=>item.top+item.height))+'px';
 }
 window.addEventListener('resize',layoutWall);
 function artworkKey(work){return work.uploadId||work.src}
@@ -80,6 +83,7 @@ function render(){
  const badge=document.createElement('span');badge.className='play-badge';badge.textContent='▶';badge.setAttribute('aria-hidden','true');button.append(badge);
  }else{img=document.createElement('img');img.src=work.thumbnail||work.src;img.alt=work.title;img.loading=index<3?'eager':'lazy';img.decoding='async'}
 
+ img.addEventListener('load',layoutWall);img.addEventListener('loadedmetadata',layoutWall);img.addEventListener('error',layoutWall);
  const caption=document.createElement('span');caption.className='caption';caption.textContent=work.title+' ↗';button.append(img,caption);
  if(work.demo){const label=document.createElement('span');label.className='demo';label.textContent='DEMO TILE';button.append(label)}
  button.addEventListener('click',()=>{opener=button;document.querySelectorAll('.tile video').forEach(video=>video.pause());show(index);box.showModal();document.body.style.overflow='hidden';document.querySelector('#close').focus()});wall.append(button);
