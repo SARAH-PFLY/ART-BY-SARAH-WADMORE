@@ -1,4 +1,4 @@
-import {parseBlog,makePost,renderArticle,renderIndex,sitemap} from './blog.mjs';
+import {parseBlog,makePost,renderArticle,renderIndex,sitemap,rss} from './blog.mjs';
 const LIMIT=8*1024*1024;
 export function hasH264Video(bytes){
  try{
@@ -122,7 +122,8 @@ async function publishBlog(update,env,details,say){
  ['blog/posts.json',JSON.stringify(nextPosts,null,2)+'\n'],
  ['blog/'+post.slug+'/index.html',renderArticle(post,text,nextPosts)],
  ['blog/index.html',renderIndex(nextPosts)],
- ['sitemap.xml',sitemap(nextPosts)]
+ ['sitemap.xml',sitemap(nextPosts)],
+ ['feed.xml',rss(nextPosts)]
  ];
  const entries=[];
  for(const [path,content] of outputs){
