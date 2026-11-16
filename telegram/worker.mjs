@@ -46,7 +46,10 @@ export function detectMedia(bytes){
  return null;
 }
 
-export function parse(text=''){const match=text.match(/^\/upload(?:@\w+)?\s+([\s\S]+)$/i);if(!match)return null;const parts=match[1].split('|').map(x=>x.trim());if(!parts[0]||parts[0].length>200)return null;return {title:parts[0],medium:parts.slice(1).join(' · ').slice(0,800)}}
+export const TITLE_LIMIT=36;
+const titleSegments=new Intl.Segmenter('en',{granularity:'grapheme'});
+export const uploadTitleLength=title=>Array.from(titleSegments.segment(title)).length;
+export function parse(text=''){const match=text.match(/^\/upload(?:@\w+)?\s+([\s\S]+)$/i);if(!match)return null;const parts=match[1].split('|').map(x=>x.trim());if(!parts[0]||uploadTitleLength(parts[0])>TITLE_LIMIT)return null;return {title:parts[0],medium:parts.slice(1).join(' · ').slice(0,800)}}
 function b64(bytes){let s='';for(let i=0;i<bytes.length;i+=8192)s+=String.fromCharCode(...bytes.subarray(i,i+8192));return btoa(s)}
 const encode=text=>b64(new TextEncoder().encode(text));
 async function equal(a,b){const hash=async s=>new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s)));const x=await hash(a),y=await hash(b);return x.reduce((v,n,i)=>v|(n^y[i]),0)===0}
@@ -168,9 +171,12 @@ async function handle(update,env){
 
  const say=text=>telegram(env,'sendMessage',{chat_id:m.chat.id,text});
  const text=m.caption||m.text||'';
- if(/^\/(start|help)(?:@\w+)?(?:\s|$)/i.test(text)){await say('Send one photo, GIF or MP4 video with this caption:\n/upload Artwork title | Medium | Dimensions\nOr reply with that command to the media. JPEG, PNG, WebP, GIF and MP4 files are supported (maximum 8 MB per file). For best video compatibility use H.264 video with AAC audio.\nRemove an artwork: /delete Artwork title (title only).\nPublish TXT/Markdown: /blog Article title | Category (document caption or reply).\nOpen gallery: /app\nConfigure Mini App launch menu: /miniapp');return}
+ if(/^\/(start|help)(?:@\w+)?(?:\s|$)/i.test(text)){await say('Send one photo, GIF or MP4 video with this caption:\n/upload Artwork title | Medium | Dimensions\nTitle: maximum 36 characters, including spaces and emoji. Medium and dimensions go after |.\nOr reply with that command to the media. JPEG, PNG, WebP, GIF and MP4 files are supported (maximum 8 MB per file). For best video compatibility use H.264 video with AAC audio.\nRemove an artwork: /delete Artwork title (title only).\nPublish TXT/Markdown: /blog Article title | Category (document caption or reply).\nOpen gallery: /app\nConfigure Mini App launch menu: /miniapp');return}
  const blogDetails=parseBlog(text);if(blogDetails!==null){await publishBlog(update,env,blogDetails,say);return}
  const titleToDelete=deleteTitle(text);if(titleToDelete!==null){await deleteArtwork(update,env,titleToDelete,say);return}
+ const uploadMatch=text.match(/^\/upload(?:@\w+)?\s+([\s\S]+)$/i);
+ const uploadTitle=uploadMatch?.[1].split('|')[0].trim();
+ if(uploadTitle&&uploadTitleLength(uploadTitle)>TITLE_LIMIT){await say('Upload rejected: title is '+uploadTitleLength(uploadTitle)+' characters. Maximum 36 characters, including spaces and emoji. Shorten the title before the first | and send /upload again. Medium and dimensions go after |.');return}
  const details=parse(text);if(!details){await say('Use /upload Artwork title | Medium | Dimensions as the media caption, or reply to the media with that command.');return}
  const media=m.photo||m.animation||m.video||m.document?m:m.reply_to_message;
  const file=media?.photo?.at(-1)||media?.animation||media?.video||media?.document;

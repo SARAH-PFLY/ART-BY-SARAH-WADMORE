@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import worker,{detectMedia,parse} from './worker.mjs';
+import worker,{detectMedia,parse,uploadTitleLength} from './worker.mjs';
 const bytes=s=>Uint8Array.from(s,c=>c.charCodeAt(0));
 assert.equal(detectMedia(bytes('GIF89a123456')).ext,'gif');
 assert.equal(detectMedia(bytes('GIF87a123456')).ext,'gif');
@@ -69,3 +69,20 @@ console.log('Passed media detection and 6 mocked webhook upload scenarios');
 
 result=await run({caption:'/upload HEVC rejected',video:{file_id:'h',file_size:300}},mp4('hvc1'));
 assert.equal(result.saved,undefined);assert.match(result.reply,/H.264/);
+
+assert.equal(parse('/upload '+ 'A'.repeat(36)).title.length,36);
+assert.equal(parse('/upload '+ 'A'.repeat(37)),null);
+assert.equal(parse('/upload@Sarahs_artbot '+ 'A'.repeat(36)+' | '+ 'M'.repeat(200)).medium.length,200);
+assert.equal(uploadTitleLength('👩‍🎨'),1);
+assert.equal(parse('/upload '+ '👩‍🎨'.repeat(36)).title,'👩‍🎨'.repeat(36));
+assert.equal(parse('/upload '+ '👩‍🎨'.repeat(37)),null);
+for(const message of [
+ {caption:'/upload '+ 'A'.repeat(37),photo:[{file_id:'x'}]},
+ {text:'/upload '+ 'A'.repeat(37),reply_to_message:{photo:[{file_id:'x'}]}}
+]){
+ const result=await run(message,new Uint8Array());
+ assert.equal(result.saved,undefined);
+ assert.equal(result.calls.length,1);
+ assert.match(result.reply,/Upload rejected.*37.*Maximum 36/);
+}
+console.log('36-character boundaries, emoji and pre-download rejection passed');

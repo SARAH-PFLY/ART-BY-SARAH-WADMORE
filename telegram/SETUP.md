@@ -13,6 +13,8 @@ Or reply to the media with the command. JPEG, PNG, WebP, GIF and MP4 documents u
 
 The bot commits image and updated artworks.json atomically to main, newest entry first. Telegram retries are deduplicated by update ID. Concurrent uploads retry against the latest branch head. No bot token or Telegram file URL appears on the public website. Uploaded artwork files and details are public in this repository. Pages deployment must succeed before the new artwork becomes visible; this is not instantaneous.
 
+Titles must be at most **36 visible characters**, including spaces and emoji. The bot rejects longer titles before downloading or saving the media. Medium and dimensions after the first `|` do not count toward this limit. Existing artworks are unchanged.
+
 ## Unique artwork titles
 
 Every /upload checks the currently published artwork manifest against the latest main-branch snapshot before downloading media. It repeats the check immediately before saving, and after every concurrent Git conflict. The title is the part before the first | in /upload; the physical filename and medium do not define a separate artwork name.
