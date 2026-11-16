@@ -75,7 +75,7 @@ async function deleteArtwork(update,env,title,say){
  if(target!==null&&target!==identity){await say('That artwork changed while deleting. Nothing deleted. Please check the title and try again.');return}
  target=identity;
  const remaining=list.filter(work=>work!==match);
- const ledger=[...deleted,{updateId:id,title:match.title,src:match.src,deletedAt:new Date().toISOString()}];
+ const ledger=[...deleted,{updateId:id,uploadId:match.uploadId||null,title:match.title,src:match.src,deletedAt:new Date().toISOString()}];
  const entries=[];
  for(const [path,value] of [['artworks.json',remaining],['telegram/deletions.json',ledger]]){
  const blob=await gh(env,'git/blobs','POST',{encoding:'base64',content:encode(JSON.stringify(value,null,2)+'\n')});
@@ -117,6 +117,10 @@ async function handle(update,env){
  const manifest=await gh(env,'contents/artworks.json?ref='+head);
  const list=JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(manifest.content.replace(/\s/g,'')),c=>c.charCodeAt(0))));
  if(!Array.isArray(list))throw Error('Invalid artwork manifest');
+ let tombstones=[];
+ try{const file=await gh(env,'contents/telegram/deletions.json?ref='+head);tombstones=JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(file.content.replace(/\s/g,'')),c=>c.charCodeAt(0))))}catch(error){if(!/^GitHub 404 /.test(error.message))throw error}
+ if(!Array.isArray(tombstones))throw Error('Invalid deletion ledger');
+ if(tombstones.some(entry=>entry.uploadId===id||entry.src===path)){await say('This upload was deleted and will not be republished. Send the media again as a new message to upload it again.');return}
  if(list.some(w=>w.uploadId===id)){await say('This upload is already saved.');return}
  const entry={...details,src:path,type,animated:!!(detected.animated||media.animation),uploadId:id,uploadedAt:new Date().toISOString()};
  const image=await gh(env,'git/blobs','POST',{encoding:'base64',content:b64(bytes)});
