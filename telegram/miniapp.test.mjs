@@ -6,11 +6,19 @@ function context(telegram=true,path='/'){
  const calls=[],events={},styles={},dialog={open:false},location={pathname:path,href:'https://sarahwadmore.com'+path,origin:'https://sarahwadmore.com',assign:p=>calls.push(['navigate',p])};
  const app={initData:'test',platform:'android',safeAreaInset:{top:10,bottom:5},contentSafeAreaInset:{top:20},viewportStableHeight:700,ready:()=>calls.push(['ready']),expand:()=>calls.push(['expand']),setHeaderColor:()=>{},setBackgroundColor:()=>{},isVersionAtLeast:()=>true,setBottomBarColor:()=>{},onEvent:(name,fn)=>events[name]=fn,BackButton:{show:()=>calls.push(['show']),hide:()=>calls.push(['hide']),onClick:fn=>events.back=fn}};
  const document={documentElement:{classList:{add:()=>{}},style:{setProperty:(key,value)=>styles[key]=value}},querySelector:s=>s==='#lightbox'?dialog:{click:()=>{dialog.open=false;calls.push(['close'])}},addEventListener:(name,fn)=>events[name]=fn};
- const c={window:{Telegram:telegram?{WebApp:app}:undefined,innerHeight:600},document,location,URL,MutationObserver:class{constructor(fn){events.mutation=fn}observe(){}}};
- runInNewContext(source,c);return {calls,events,styles,dialog};
+ const c={window:{Telegram:telegram?{WebApp:app}:undefined,innerHeight:600,addEventListener:(name,fn)=>events['window:'+name]=fn,visualViewport:{height:550,addEventListener:(name,fn)=>events['visual:'+name]=fn}},document,location,URL,MutationObserver:class{constructor(fn){events.mutation=fn}observe(){}disconnect(){}}};
+ runInNewContext(source,c);return {calls,events,styles,dialog,app,window:c.window,document};
 }
 let c=context(false);assert.deepEqual(c.calls,[]);
-c=context();assert.ok(c.calls.some(x=>x[0]==='ready'));assert.equal(c.styles['--app-safe-top'],'30px');assert.equal(c.styles['--app-height'],'700px');
+c=context();assert.ok(c.calls.some(x=>x[0]==='ready'));assert.equal(c.styles['--app-safe-top'],'30px');assert.equal(c.styles['--app-height'],'550px');
 c.dialog.open=true;c.events.mutation();assert.equal(c.calls.at(-1)[0],'show');c.events.back();assert.equal(c.calls.at(-1)[0],'close');
 c=context(true,'/about/');c.events.back();assert.deepEqual(c.calls.at(-1),['navigate','/']);
 console.log('Passed ordinary-browser fallback, Telegram initialization, safe areas, viewport and back navigation');
+
+c=context();c.app.viewportHeight=480;c.events.viewportChanged();assert.equal(c.styles['--app-height'],'480px');
+c.app.viewportHeight=620;c.window.visualViewport.height=400;c.events['visual:resize']();assert.equal(c.styles['--app-height'],'400px');
+let childClosed=0;const childStyles={},childDialog={open:true},childDoc={documentElement:{classList:{add(){}},style:{setProperty:(key,value)=>childStyles[key]=value}},querySelector:s=>s==='#lightbox'?childDialog:{click(){childDialog.open=false;childClosed++}},addEventListener(){}};
+c.window.__sarahRadio={framed:true,document:()=>childDoc,navigate:p=>c.calls.push(['radioNavigate',p])};
+c.events['window:sarah:page-changed']();assert.equal(childStyles['--app-height'],'400px');c.events.back();assert.equal(childClosed,1);c.events.back();assert.deepEqual(c.calls.at(-1),['radioNavigate','/']);
+console.log('Passed current visible viewport resize and native Telegram Back targeting the active radio page');
+
