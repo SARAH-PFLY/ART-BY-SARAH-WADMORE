@@ -72,6 +72,6 @@ if(!document.documentElement.requestFullscreen)expand.hidden=true;
 expand.onclick=async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen()}catch{expand.hidden=true}};
 document.querySelector('#year').textContent=new Date().getFullYear();
 async function init(){try{const response=await fetch('./artworks.json');if(!response.ok)throw Error('Gallery unavailable');const data=await response.json();if(!Array.isArray(data))throw Error('Invalid gallery');works=data.filter(w=>w&&typeof w.src==='string'&&typeof w.title==='string')}catch(error){console.warn(error)}
- if(!works.length)works=Array.from({length:24},(_,i)=>({title:'Demo composition '+String(i+1).padStart(2,'0'),src:placeholder(i),demo:true}));else document.querySelector('#note').textContent='Select an artwork to explore';render()}
+ if(!works.length){const empty=document.createElement('p');empty.textContent='No artworks to display.';empty.style.padding='24px';wall.append(empty);document.querySelector('#note').textContent='Artwork gallery'}else{document.querySelector('#note').textContent='Select an artwork to explore';render()}}
 init();
 </script></body></html>
