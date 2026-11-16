@@ -11,6 +11,7 @@ export class BulkEngine {
  const m=update.message,text=m.caption||m.text||'',start=text.match(/^\/bulk(?:@\w+)?(?:\s+([\s\S]*))?$/i);
  let s=this.get();
  if(start){
+ if(s?.id===String(update.update_id)){await this.send('Batch already started: '+s.items.length+' images collected. Continue sending images or use /done.');return true}
  if(s?.status==='processing'){await this.send('Batch still processing. Use /bulkstatus, or /cancel to stop remaining images.');return true}
  const input=(start[1]||'').trim(),command=!input?this.defaultTemplate:input.startsWith('/upload')?input:this.emojiCaption(input);
  const details=command&&this.parse(command);
