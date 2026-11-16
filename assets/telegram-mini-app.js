@@ -1,11 +1,31 @@
 (() => {
  'use strict';
- try{if(parent!==window&&parent.location.origin===location.origin&&parent.__sarahRadio)return}catch{}
+ try{if(parent!==window&&parent.location.origin===location.origin&&parent.__sarahRadio){window.__sarahMiniApp=parent.__sarahMiniApp;return}}catch{}
  const app=window.Telegram?.WebApp;
  if(!app||(!app.initData&&app.platform==='unknown'))return;
  const root=document.documentElement;
  root.classList.add('telegram-mini-app');
  const currentDocument=()=>window.__sarahRadio?.document()||document;
+ let fullscreenUnsupported=false;
+ const nativeFullscreen=()=>!fullscreenUnsupported&&app.isVersionAtLeast?.('8.0')&&typeof app.requestFullscreen==='function'&&typeof app.exitFullscreen==='function';
+ const syncFullscreen=()=>{
+ const button=currentDocument().querySelector('#expand');if(!button)return;
+ button.hidden=false;
+ button.setAttribute('aria-label',app.isFullscreen?'Exit Telegram fullscreen':'Enter Telegram fullscreen');
+ button.setAttribute('aria-pressed',String(!!app.isFullscreen));
+ };
+ const fullscreenUnavailable=()=>{
+ app.expand();const status=currentDocument().querySelector('#media-status');
+ if(status)status.textContent='Fullscreen is not supported by this Telegram app. Try updating Telegram or maximising its Mini App window.';
+ syncFullscreen();
+ };
+ window.__sarahMiniApp={
+ toggleFullscreen(){
+ if(!nativeFullscreen()){fullscreenUnavailable();return}
+ try{if(app.isFullscreen)app.exitFullscreen();else app.requestFullscreen()}catch{fullscreenUnsupported=true;fullscreenUnavailable()}
+ },
+ exitFullscreen(){if(nativeFullscreen()&&app.isFullscreen)try{app.exitFullscreen()}catch{}}
+ };
  const safe=()=>{
  const height=Math.min(window.innerHeight,window.visualViewport?.height||Infinity,app.viewportHeight||Infinity);
  for(const doc of new Set([document,currentDocument()])){
@@ -28,13 +48,15 @@
  event.preventDefault();if(url.hostname==='t.me')app.openTelegramLink(url.href);else app.openLink(url.href);
  });
  }
- safe();syncBack();
+ safe();syncBack();syncFullscreen();
  };
  try{
  app.ready();app.expand();app.setHeaderColor?.('#000000');app.setBackgroundColor?.('#000000');
  if(app.isVersionAtLeast?.('7.10'))app.setBottomBarColor?.('#000000');
  app.BackButton?.onClick(back);
  for(const event of ['viewportChanged','safeAreaChanged','contentSafeAreaChanged'])app.onEvent?.(event,safe);
+ app.onEvent?.('fullscreenChanged',()=>{safe();syncFullscreen()});
+ app.onEvent?.('fullscreenFailed',event=>{if(event?.error==='ALREADY_FULLSCREEN'){syncFullscreen();return}fullscreenUnsupported=true;fullscreenUnavailable()});
  window.addEventListener('resize',safe);
  window.visualViewport?.addEventListener('resize',safe);
  window.addEventListener('sarah:page-changed',bindPage);
