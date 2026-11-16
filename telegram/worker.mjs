@@ -138,10 +138,20 @@ async function publishBlog(update,env,details,say){
 }
 
 async function handle(update,env){
- const m=update.message;if(!m||m.chat.type!=='private'||String(m.from?.id)!==env.SARAH_USER_ID)return;
+ const m=update.message;if(!m||m.chat.type!=='private')return;
+ const command=m.text||'';
+ const launch=()=>telegram(env,'sendMessage',{chat_id:m.chat.id,text:'Explore Sarah Wadmore’s artworks and studio journal.',reply_markup:{inline_keyboard:[[{text:'Open Sarah’s Art',web_app:{url:'https://sarahwadmore.com/'}}]]}});
+ if(/^\/app(?:@\w+)?(?:\s|$)/i.test(command)){await launch();return}
+ if(String(m.from?.id)!==env.SARAH_USER_ID){if(/^\/(start|help)(?:@\w+)?(?:\s|$)/i.test(command))await launch();return}
+ if(/^\/miniapp(?:@\w+)?(?:\s|$)/i.test(command)){
+ const bot=await telegram(env,'getMe',{});if(bot.username?.toLowerCase()!=='sarahs_artbot')throw Error('Wrong bot');
+ await telegram(env,'setChatMenuButton',{menu_button:{type:'web_app',text:'Open Gallery',web_app:{url:'https://sarahwadmore.com/'}}});
+ await launch();return;
+ }
+
  const say=text=>telegram(env,'sendMessage',{chat_id:m.chat.id,text});
  const text=m.caption||m.text||'';
- if(/^\/(start|help)(?:@\w+)?(?:\s|$)/i.test(text)){await say('Send one photo, GIF or MP4 video with this caption:\n/upload Artwork title | Medium | Dimensions\nOr reply with that command to the media. JPEG, PNG, WebP, GIF and MP4 files are supported (maximum 8 MB per file). For best video compatibility use H.264 video with AAC audio.\nRemove an artwork: /delete Artwork title (title only).\nPublish TXT/Markdown: /blog Article title | Category (document caption or reply).');return}
+ if(/^\/(start|help)(?:@\w+)?(?:\s|$)/i.test(text)){await say('Send one photo, GIF or MP4 video with this caption:\n/upload Artwork title | Medium | Dimensions\nOr reply with that command to the media. JPEG, PNG, WebP, GIF and MP4 files are supported (maximum 8 MB per file). For best video compatibility use H.264 video with AAC audio.\nRemove an artwork: /delete Artwork title (title only).\nPublish TXT/Markdown: /blog Article title | Category (document caption or reply).\nOpen gallery: /app\nConfigure Mini App launch menu: /miniapp');return}
  const blogDetails=parseBlog(text);if(blogDetails!==null){await publishBlog(update,env,blogDetails,say);return}
  const titleToDelete=deleteTitle(text);if(titleToDelete!==null){await deleteArtwork(update,env,titleToDelete,say);return}
  const details=parse(text);if(!details){await say('Use /upload Artwork title | Medium | Dimensions as the media caption, or reply to the media with that command.');return}
