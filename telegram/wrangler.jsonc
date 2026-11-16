@@ -18,5 +18,21 @@
       "binding": "ART_DRAFTS",
       "id": "c22ed3c9a86743fa8877f18de469019e"
     }
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "BULK_SESSIONS",
+        "class_name": "BulkUploads"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "bulk-v1",
+      "new_sqlite_classes": [
+        "BulkUploads"
+      ]
+    }
   ]
 }
