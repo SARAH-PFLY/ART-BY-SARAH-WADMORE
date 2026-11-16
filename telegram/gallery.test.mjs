@@ -14,3 +14,8 @@ context.reducedMotion.matches=true;runInNewContext(onClose,context);assert.equal
 context.reducedMotion.matches=false;video.dataset.visible='false';runInNewContext(onClose,context);assert.equal(played,1);assert.equal(paused,2);
 video.dataset.visible='true';context.box.open=true;runInNewContext('syncPreviews()',context);assert.equal(played,1);assert.equal(paused,3);
 console.log('Passed animation close/resume, reduced motion, offscreen and modal-open checks');
+
+context.box.open=false;context.document.hidden=true;runInNewContext('syncPreviews()',context);assert.equal(played,1);assert.equal(paused,4);
+context.document.hidden=false;runInNewContext('syncPreviews()',context);assert.equal(played,2);
+assert.ok(!html.includes('if(work.animated){img.loop=true;'));
+console.log('All homepage videos use visibility-controlled looping; hidden tabs pause');
