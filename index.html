@@ -167,7 +167,7 @@ sharePanel.querySelector('#device-share').onclick=async()=>{
 };
 document.querySelector('#share').onclick=()=>{
  shareWork=works[current];if(!shareWork)return;
- const url=new URL('/',location.origin);url.searchParams.set('art',artworkKey(shareWork));shareURL=url.href;
+ const url=new URL('/',location.origin);if(/^\d+$/.test(shareWork.uploadId||''))url.pathname='/art/'+shareWork.uploadId+'/';else url.searchParams.set('art',artworkKey(shareWork));shareURL=url.href;
  const download=sharePanel.querySelector('#download-art');download.href=new URL(shareWork.src,location.href).href;
  download.download=shareWork.src.split('/').pop();selectSharePlatform();sharePanel.querySelector('.share-info').open=false;sharePanel.showModal();sharePanel.scrollTop=0;
 };

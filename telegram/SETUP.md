@@ -64,3 +64,17 @@ Run node telegram/blog.test.mjs alongside the other bot tests. Merge the blog pa
 7. Test one upload from Sarah, confirm its GitHub commit and successful Pages deployment, and check https://sarahwadmore.com/. Test an unauthorized user: no commit should be created.
 
 The photo uploader is active on Cloudflare and has completed a real upload. GIF/video changes require merging the gallery PR and deploying its Worker module before testing. Run `node telegram/worker.test.mjs` from the repository root for media detection and mocked webhook tests. Browser playback and real GIF/video uploads remain acceptance checks.
+
+## Guided emoji uploads and publishing status
+
+Sarah can send one photo, GIF or H.264 MP4 without a caption. The bot replies with a force-reply prompt; reply to that prompt with one to three title emojis. The artwork publishes using the title prefix "#streetartist #SarahPFLY Wadmore " and notes "👁 · 🌼🌸🌺". Different artworks need different title emojis because duplicate title protection still applies. /xxx and manual /upload remain available for custom titles and notes.
+
+Guided prompts expire after one hour. Reply /cancel to a prompt to cancel it. Each prompt is linked to its own original media message, so replying to one prompt cannot publish a different pending photo. Only Sarah's authorized account can use this flow. ART_DRAFTS is a dedicated Workers KV binding; drafts retain Telegram media references for at most one hour, not downloaded media.
+
+Send /status to compare saved artwork/blog lists with the live website. The reply distinguishes LIVE, SAVED/pending, PUBLISHING when Pages confirms a build, and FAILED when the latest repository commit has an errored Pages build. Network or API failures are reported as unverified rather than success. This is an on-demand check, not a background notification.
+
+## Artwork social preview pages
+
+Uploads atomically create /art/UPLOAD_ID/index.html alongside media and artworks.json. Each page contains static Open Graph/Twitter metadata with the artwork title, notes and image URL. Video pages use video metadata rather than inventing a poster image. Browsers open the artwork in the existing gallery; crawlers can read metadata without JavaScript. Share controls use these URLs; the old ?art= links still work. Platform caching controls when previews refresh.
+
+Gallery deletion also removes the associated social preview page. It still retains the original media and Git history. Deploy worker.mjs, blog.mjs AND upgrades.mjs together, preserving ART_DRAFTS and all encrypted secrets. Run node --test telegram/worker.test.mjs telegram/delete.test.mjs telegram/blog.test.mjs telegram/miniapp.test.mjs telegram/upgrades.test.mjs.

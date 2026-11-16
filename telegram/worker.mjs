@@ -1,3 +1,4 @@
+import {sharePath,renderSharePage,guidedUpload,publicationStatus} from './upgrades.mjs';
 import {parseBlog,makePost,renderArticle,renderIndex,sitemap,rss} from './blog.mjs';
 const LIMIT=8*1024*1024;
 export function hasH264Video(bytes){
@@ -47,7 +48,7 @@ export function detectMedia(bytes){
 }
 
 export const BLOG_TEMPLATE="/blog #streetartist #SarahPFLY Wadmore 🌷🌹🌻| 👁 | 🌼🌸🌺";
-export const START_GUIDE="<b>Sarah’s Art · quick guide</b>\n\n<b>1 · Upload an artwork</b>\nSend /xxx for your ready-to-copy template:\n<code>/upload #streetartist #SarahPFLY Wadmore 🌷🌹🌻| 👁 | 🌼🌸🌺</code>\nCopy it, change the emojis/details, then send ONE photo, GIF or MP4 with the command as its caption. Or reply to an existing media message with the command.\n\n• Title = everything before the first |. Maximum 36 visible characters, including spaces and emoji. Your default title already uses 36.\n• Medium/notes and dimensions go after | and do not count toward the title limit.\n• Give each artwork a unique title. Changing only the medium/notes will not create a new title. Change the title emojis when uploading a different artwork.\n• JPEG, PNG, WebP, GIF and H.264 MP4 supported; maximum 8 MB per file. For video use AAC audio if needed. MOV/HEVC is unsupported.\n• One artwork per message, not an album. Send as a file/document to avoid Telegram photo compression.\n\n<b>2 · Publish a blog</b>\nSend /bbb for your ready-to-copy template:\n<code>/blog #streetartist #SarahPFLY Wadmore 🌷🌹🌻| 👁 | 🌼🌸🌺</code>\nCopy it and edit, then attach a UTF-8 .txt or .md document containing the full finished article, using the command as its caption. Or reply to that document with the command.\n• Format: /blog Article title | Category. Only the title and first category field are used; the final decorative emoji field is ignored.\n• Blog title: up to 160 characters; category: up to 60. The 36-character artwork limit does not apply to blogs.\n• Document: maximum 256 KB and 60,000 characters. Paragraphs, headings, lists, quotes and Markdown links work. PDF/Word files are unsupported.\n• The article is published as supplied, without AI rewriting. The newest suitable gallery image may be used as its cover.\n• The bot returns the article link. Blog editing/deletion is not available through this bot.\n\n<b>3 · Remove a gallery artwork</b>\n<code>/delete Exact artwork title</code>\nUse the FULL title, including its emojis, without the | notes/dimensions. Letter case and repeated spaces do not matter.\nThis removes it from the gallery; the original file remains in the repository. No match or ambiguous duplicate title means nothing is removed. You can reuse a removed title in a NEW upload message.\n\n<b>4 · View your site</b>\n/app — open the gallery.\n/miniapp — configure the Open Gallery menu.\n/start or /help — show this guide.\n\nAfter “Saved”, allow GitHub Pages to finish publishing, then reopen/refresh the site. A save is not an instant website update. Artwork and blog content are public. Only Sarah’s authorized Telegram account can upload, publish or delete.\n\nWebsite sharing: open an artwork → ↗. Choose a platform, edit/copy the caption, save the artwork if needed, then sign in and finish posting on that platform. X supports prefilled text; other platforms may require pasting and attaching the media.";
+export const START_GUIDE="<b>Sarah’s Art · quick guide</b>\n\n<b>1 · Upload an artwork</b>\nEasy mode: send ONE photo/GIF/MP4 without a caption, then reply to the bot’s prompt with 1–3 title emojis. It publishes using your default notes. Reply /cancel to cancel. Prompts expire in one hour.\nSend /xxx for your ready-to-copy template:\n<code>/upload #streetartist #SarahPFLY Wadmore 🌷🌹🌻| 👁 | 🌼🌸🌺</code>\nCopy it, change the emojis/details, then send ONE photo, GIF or MP4 with the command as its caption. Or reply to an existing media message with the command.\n\n• Title = everything before the first |. Maximum 36 visible characters, including spaces and emoji. Your default title already uses 36.\n• Medium/notes and dimensions go after | and do not count toward the title limit.\n• Give each artwork a unique title. Changing only the medium/notes will not create a new title. Change the title emojis when uploading a different artwork.\n• JPEG, PNG, WebP, GIF and H.264 MP4 supported; maximum 8 MB per file. For video use AAC audio if needed. MOV/HEVC is unsupported.\n• One artwork per message, not an album. Send as a file/document to avoid Telegram photo compression.\n\n<b>2 · Publish a blog</b>\nSend /bbb for your ready-to-copy template:\n<code>/blog #streetartist #SarahPFLY Wadmore 🌷🌹🌻| 👁 | 🌼🌸🌺</code>\nCopy it and edit, then attach a UTF-8 .txt or .md document containing the full finished article, using the command as its caption. Or reply to that document with the command.\n• Format: /blog Article title | Category. Only the title and first category field are used; the final decorative emoji field is ignored.\n• Blog title: up to 160 characters; category: up to 60. The 36-character artwork limit does not apply to blogs.\n• Document: maximum 256 KB and 60,000 characters. Paragraphs, headings, lists, quotes and Markdown links work. PDF/Word files are unsupported.\n• The article is published as supplied, without AI rewriting. The newest suitable gallery image may be used as its cover.\n• The bot returns the article link. Blog editing/deletion is not available through this bot.\n\n<b>3 · Remove a gallery artwork</b>\n<code>/delete Exact artwork title</code>\nUse the FULL title, including its emojis, without the | notes/dimensions. Letter case and repeated spaces do not matter.\nThis removes it from the gallery; the original file remains in the repository. No match or ambiguous duplicate title means nothing is removed. You can reuse a removed title in a NEW upload message.\n\n<b>4 · View your site</b>\n/status — check saved / publishing / live status.\n/app — open the gallery.\n/miniapp — configure the Open Gallery menu.\n/start or /help — show this guide.\n\nAfter “Saved”, allow GitHub Pages to finish publishing, then reopen/refresh the site. A save is not an instant website update. Artwork and blog content are public. Only Sarah’s authorized Telegram account can upload, publish or delete.\n\nWebsite sharing: open an artwork → ↗. Choose a platform, edit/copy the caption, save the artwork if needed, then sign in and finish posting on that platform. X supports prefilled text; other platforms may require pasting and attaching the media.";
 export const TITLE_LIMIT=36;
 export const UPLOAD_TEMPLATE="/upload #streetartist #SarahPFLY Wadmore 🌷🌹🌻| 👁 | 🌼🌸🌺";
 const titleSegments=new Intl.Segmenter('en',{granularity:'grapheme'});
@@ -88,6 +89,7 @@ async function deleteArtwork(update,env,title,say){
  const blob=await gh(env,'git/blobs','POST',{encoding:'base64',content:encode(JSON.stringify(value,null,2)+'\n')});
  entries.push({path,mode:'100644',type:'blob',sha:blob.sha});
  }
+ if(sharePath(match))entries.push({path:sharePath(match),mode:'100644',type:'blob',sha:null});
  const tree=await gh(env,'git/trees','POST',{base_tree:commit.tree.sha,tree:entries});
  const next=await gh(env,'git/commits','POST',{message:'Remove artwork from gallery via Telegram',tree:tree.sha,parents:[head]});
  try{await gh(env,'git/refs/heads/main','PATCH',{sha:next.sha,force:false})}catch(error){if(attempt<3&&/^GitHub (409|422) /.test(error.message))continue;throw error}
@@ -139,7 +141,7 @@ async function publishBlog(update,env,details,say){
  const tree=await gh(env,'git/trees','POST',{base_tree:commit.tree.sha,tree:entries});
  const next=await gh(env,'git/commits','POST',{message:'Publish blog article from Telegram',tree:tree.sha,parents:[head]});
  try{await gh(env,'git/refs/heads/main','PATCH',{sha:next.sha,force:false})}catch(error){if(attempt<3&&/^GitHub (409|422) /.test(error.message))continue;throw error}
- await say('Article saved: '+post.title+'\nhttps://sarahwadmore.com'+post.url+'\nThe URL and BLOG menu update after GitHub Pages finishes publishing.');return;
+ await say('Article saved: '+post.title+'\nhttps://sarahwadmore.com'+post.url+'\nThe URL and BLOG menu update after GitHub Pages finishes publishing. Send /status to check progress.');return;
  }
 }
 
@@ -186,6 +188,8 @@ async function handle(update,env){
  await telegram(env,'sendMessage',{chat_id:m.chat.id,text:START_GUIDE,parse_mode:'HTML',link_preview_options:{is_disabled:true},reply_markup:{inline_keyboard:[[{text:'Open Sarah’s Art',web_app:{url:'https://sarahwadmore.com/'}}]]}});
  return;
  }
+ if(/^\/status(?:@\w+)?(?:\s|$)/i.test(text)){await say(await publicationStatus(env,gh));return}
+ if(await guidedUpload(update,env,telegram,next=>handle(next,env)))return;
  const blogDetails=parseBlog(text);if(blogDetails!==null){await publishBlog(update,env,blogDetails,say);return}
  const titleToDelete=deleteTitle(text);if(titleToDelete!==null){await deleteArtwork(update,env,titleToDelete,say);return}
  const uploadMatch=text.match(/^\/upload(?:@\w+)?\s+([\s\S]+)$/i);
@@ -215,12 +219,13 @@ async function handle(update,env){
  const commit=await gh(env,'git/commits/'+head);
  const titleCheckedAt=new Date().toISOString();
  const entry={...details,titleCheckedAt,titleCheckedHead:head,src:path,type,animated:!!(detected.animated||media.animation),uploadId:id,uploadedAt:new Date().toISOString()};
+ const preview=await gh(env,'git/blobs','POST',{encoding:'base64',content:encode(renderSharePage(entry))});
  const image=await gh(env,'git/blobs','POST',{encoding:'base64',content:b64(bytes)});
  const json=await gh(env,'git/blobs','POST',{encoding:'base64',content:encode(JSON.stringify([entry,...list],null,2)+'\n')});
- const tree=await gh(env,'git/trees','POST',{base_tree:commit.tree.sha,tree:[{path,mode:'100644',type:'blob',sha:image.sha},{path:'artworks.json',mode:'100644',type:'blob',sha:json.sha}]});
+ const tree=await gh(env,'git/trees','POST',{base_tree:commit.tree.sha,tree:[{path:sharePath(entry),mode:'100644',type:'blob',sha:preview.sha},{path,mode:'100644',type:'blob',sha:image.sha},{path:'artworks.json',mode:'100644',type:'blob',sha:json.sha}]});
  const next=await gh(env,'git/commits','POST',{message:'Add artwork from Telegram',tree:tree.sha,parents:[head]});
  try{await gh(env,'git/refs/heads/main','PATCH',{sha:next.sha,force:false})}catch(error){if(attempt<3&&/GitHub (409|422)/.test(error.message))continue;throw error}
- await say('Saved: '+details.title+'\nIt will appear first after GitHub Pages finishes publishing.\nhttps://sarahwadmore.com/');return;
+ await say('Saved: '+details.title+'\nPublishing to the website. Send /status to check when it is live.\nhttps://sarahwadmore.com/art/'+id+'/');return;
  }
 }
 export default {async fetch(request,bindings){

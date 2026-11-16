@@ -12,5 +12,11 @@
   "vars": {
     "REPO": "SARAH-PFLY/ART-BY-SARAH-WADMORE",
     "SARAH_USER_ID": "1019741898"
-  }
+  },
+  "kv_namespaces": [
+    {
+      "binding": "ART_DRAFTS",
+      "id": "c22ed3c9a86743fa8877f18de469019e"
+    }
+  ]
 }

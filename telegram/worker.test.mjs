@@ -53,7 +53,7 @@ let result=await run({caption:'/upload GIF art | Digital',animation:{file_id:'a'
 assert.equal(result.saved[0].src,'artworks/telegram-42.gif');
 assert.equal(result.saved[0].animated,true);
 assert.equal(result.saved[1].title,'Existing');
-assert.equal(result.tree.tree.length,2);
+assert.equal(result.tree.tree.length,3);
 result=await run({caption:'/upload Video art',video:{file_id:'v',file_size:20}},mp4());
 assert.equal(result.saved[0].type,'video');
 assert.equal(result.saved[0].animated,false);
