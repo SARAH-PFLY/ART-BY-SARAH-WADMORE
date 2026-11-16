@@ -6,11 +6,11 @@ assert.equal(deleteTitle('/delete@sarahs_artbot Café'),'Café');
 assert.equal(deleteTitle('/delete'),'');
 assert.equal(deleteTitle('/upload Title'),null);
 const original=globalThis.fetch;
-async function scenario(list,commands,{conflict=false,deleteDuringConflict=false}={}){
- let ledger=[],writes=0,head=0,tree=[],replies=[],blobs=new Map(),conflicted=false;
+async function scenario(list,commands,{conflict=false,deleteDuringConflict=false,duplicateDuringConflict=false,insertOnDownload=false}={}){
+ let ledger=[],writes=0,head=0,tree=[],replies=[],blobs=new Map(),conflicted=false,downloads=0;
  globalThis.fetch=async(url,options={})=>{
  const body=options.body?JSON.parse(options.body):{};
- if(url.endsWith('/getFile'))return Response.json({ok:true,result:{file_path:'media'}});
+ if(url.endsWith('/getFile')){downloads++;if(insertOnDownload){list=[{title:'Original',src:'artworks/winner.gif',uploadId:'99'}];head++}return Response.json({ok:true,result:{file_path:'media'}})}
  if(url.includes('/file/bot'))return new Response(new TextEncoder().encode('GIF89a123456'));
  if(url.endsWith('/sendMessage')){replies.push(body.text);return Response.json({ok:true,result:{}})}
  if(url.endsWith('/git/ref/heads/main'))return Response.json({object:{sha:String(head)}});
@@ -22,7 +22,7 @@ async function scenario(list,commands,{conflict=false,deleteDuringConflict=false
  if(url.endsWith('/git/trees')){tree=body.tree;return Response.json({sha:'tree'})}
  if(url.endsWith('/git/commits'))return Response.json({sha:'next'});
  if(url.endsWith('/git/refs/heads/main')){
- if(conflict&&!conflicted){conflicted=true;if(deleteDuringConflict){list=[];ledger=[{updateId:'999',uploadId:'1',src:'artworks/telegram-1.gif'}]}else list=[{title:'Concurrent upload',src:'new.jpg'},...list];head++;return Response.json({message:'Conflict'},{status:422})}
+ if(conflict&&!conflicted){conflicted=true;if(deleteDuringConflict){list=[];ledger=[{updateId:'999',uploadId:'1',src:'artworks/telegram-1.gif'}]}else if(duplicateDuringConflict)list=[{title:'Original',src:'artworks/winner.gif',uploadId:'99'},...list];else list=[{title:'Concurrent upload',src:'new.jpg'},...list];head++;return Response.json({message:'Conflict'},{status:422})}
  for(const entry of tree){if(entry.path==='artworks.json')list=blobs.get(entry.sha);else if(entry.path==='telegram/deletions.json')ledger=blobs.get(entry.sha)}
  head++;writes++;return Response.json({});
  }
@@ -33,7 +33,7 @@ async function scenario(list,commands,{conflict=false,deleteDuringConflict=false
  const response=await worker.fetch(new Request('https://test/telegram',{method:'POST',headers:{'X-Telegram-Bot-Api-Secret-Token':'secret'},body:JSON.stringify({update_id:cmd.id??50,message:{text:cmd.text,...(cmd.media?{animation:{file_id:'gif',file_size:12}}:{}),chat:{id:123,type:cmd.group?'group':'private'},from:{id:cmd.user||123}}})}),env);
  assert.equal(response.status,200);
  }
- return {list,ledger,writes,replies};
+ return {list,ledger,writes,replies,downloads};
  }finally{globalThis.fetch=original}
 }
 const work={title:'Café Sunset',src:'artworks/photo.jpg',uploadId:'1'},other={title:'Other',src:'other.gif'};
@@ -55,3 +55,17 @@ assert.equal(r.list.length,1);assert.equal(r.list[0].uploadId,'3');
 r=await scenario([],[{id:1,text:'/upload Original',media:true}],{conflict:true,deleteDuringConflict:true});
 assert.deepEqual(r.list,[]);assert.equal(r.writes,0);assert.match(r.replies[0],/will not be republished/);
 console.log('Passed upload-delete-redelivery, fresh reupload and concurrent deletion tombstone checks');
+
+const current={title:'Original',src:'artworks/first.gif',uploadId:'10',uploadedAt:'2026-11-16T00:00:00.000Z'};
+for(const title of ['Original','original','  ORIGINAL   ','ＯＲＩＧＩＮＡＬ']){
+ r=await scenario([current],[{id:11,text:'/upload '+title+' | Different medium',media:true}]);
+ assert.equal(r.writes,0);assert.equal(r.downloads,0);assert.equal(r.list.length,1);assert.match(r.replies[0],/Upload rejected/);assert.match(r.replies[0],/2026-11-16T00:00:00.000Z/);
+}
+r=await scenario([current],[{id:10,text:'/upload Original',media:true}]);assert.equal(r.downloads,0);assert.match(r.replies[0],/already saved/);
+r=await scenario([current],[{id:20,text:'/delete Original'},{id:21,text:'/upload original',media:true}]);
+assert.equal(r.list.length,1);assert.equal(r.list[0].uploadId,'21');assert.equal(r.writes,2);assert.ok(Number.isFinite(Date.parse(r.list[0].titleCheckedAt)));assert.equal(r.list[0].titleCheckedHead,'1');
+r=await scenario([],[{id:1,text:'/upload Original',media:true}],{conflict:true,duplicateDuringConflict:true});
+assert.equal(r.writes,0);assert.equal(r.list.length,1);assert.equal(r.list[0].uploadId,'99');assert.match(r.replies[0],/Upload rejected/);
+r=await scenario([],[{id:1,text:'/upload Original',media:true}],{insertOnDownload:true});
+assert.equal(r.writes,0);assert.equal(r.list.length,1);assert.match(r.replies[0],/Upload rejected/);
+console.log('Passed duplicate title rejection before download, normalized names, idempotent retries, reuse after deletion, UTC check record and concurrent race checks');
