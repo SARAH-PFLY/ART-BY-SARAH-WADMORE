@@ -102,7 +102,8 @@
   toolbar.querySelector('#zoom-in').onclick=()=>setZoom(zoom+.5);
   toolbar.querySelector('#zoom-out').onclick=()=>setZoom(zoom-.5);
   zoomReset.onclick=()=>setZoom(1);
-  full.addEventListener('dblclick',event=>{event.preventDefault();setZoom(zoom>1?1:2)});
+  // Pointer capture retargets desktop clicks to the viewer, including dblclick.
+  viewer.addEventListener('dblclick',event=>{if(full.hidden||event.target===fullVideo||fullVideo.contains(event.target))return;event.preventDefault();setZoom(zoom>1?1:2)});
   full.draggable=false;
   let lastTap=0;
   viewer.addEventListener('pointerdown',event=>{
