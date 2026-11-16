@@ -13,6 +13,16 @@ Or reply to the media with the command. JPEG, PNG, WebP, GIF and MP4 documents u
 
 The bot commits image and updated artworks.json atomically to main, newest entry first. Telegram retries are deduplicated by update ID. Concurrent uploads retry against the latest branch head. No bot token or Telegram file URL appears on the public website. Uploaded artwork files and details are public in this repository. Pages deployment must succeed before the new artwork becomes visible; this is not instantaneous.
 
+## Unique artwork titles
+
+Every /upload checks the currently published artwork manifest against the latest main-branch snapshot before downloading media. It repeats the check immediately before saving, and after every concurrent Git conflict. The title is the part before the first | in /upload; the physical filename and medium do not define a separate artwork name.
+
+Titles match without regard to case, repeated whitespace or Unicode compatibility forms. If a normalized title is still in the gallery, the reply starts with **Upload rejected**, includes the existing upload timestamp when available, and explains that the artwork must be deleted or renamed first. It does not download or save the rejected media.
+
+After /delete commits removal, a new Telegram message can upload that title again. Old upload deliveries remain blocked by the deletion ledger, so retries cannot restore deleted artwork. New saved entries include titleCheckedAt (UTC) and titleCheckedHead (the exact repository snapshot checked), alongside uploadedAt. Current manifest presence and atomic branch updates decide whether a title is in or out; historical media files in the repo do not reserve a deleted title.
+
+Run node telegram/delete.test.mjs for duplicate-name checks, deletion/reuse, retries, pre-download rejection and concurrent upload races. Blog post titles are a separate namespace and keep their existing behaviour.
+
 ## Delete from the gallery
 
 Send `/delete Artwork title` in the bot's private chat. Supply only the artwork title, without medium or dimensions. Matching uses the full title, ignoring letter case and repeated whitespace. Only Sarah's configured account can delete. Missing or duplicate titles cause no change.

@@ -137,6 +137,23 @@ async function publishBlog(update,env,details,say){
  }
 }
 
+async function artworkState(env){
+ const ref=await gh(env,'git/ref/heads/main'),head=ref.object.sha;
+ const decode=file=>JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(file.content.replace(/\s/g,'')),c=>c.charCodeAt(0))));
+ const list=decode(await gh(env,'contents/artworks.json?ref='+head));
+ let tombstones=[];try{tombstones=decode(await gh(env,'contents/telegram/deletions.json?ref='+head))}catch(error){if(!/^GitHub 404 /.test(error.message))throw error}
+ if(!Array.isArray(list)||!Array.isArray(tombstones))throw Error('Invalid artwork state');
+ return {head,list,tombstones};
+}
+export function checkArtworkTitle(state,title,id){
+ if(state.tombstones.some(entry=>entry.uploadId===id||String(entry.src||'').startsWith('artworks/telegram-'+id+'.')))return 'This upload was deleted and will not be republished. Send the media again as a new message to upload it again.';
+ if(state.list.some(work=>work.uploadId===id))return 'This upload is already saved.';
+ const existing=state.list.find(work=>normalizeTitle(work.title)===normalizeTitle(title));
+ if(!existing)return null;
+ const timestamp=existing.uploadedAt&&Number.isFinite(Date.parse(existing.uploadedAt))?'\nAlready uploaded: '+new Date(existing.uploadedAt).toISOString():'';
+ return 'Upload rejected: an artwork titled "'+existing.title+'" is already in the gallery.'+timestamp+'\nDelete the current artwork first, or use a different title.';
+}
+
 async function handle(update,env){
  const m=update.message;if(!m||m.chat.type!=='private')return;
  const command=m.text||'';
@@ -159,6 +176,7 @@ async function handle(update,env){
  const file=media?.photo?.at(-1)||media?.animation||media?.video||media?.document;
  if(!file){await say('Please attach a photo, GIF or MP4 video, or reply to one with /upload and the details.');return}
  if((file.file_size||0)>LIMIT){await say('Please send a file smaller than 8 MB.');return}
+ const preflight=await artworkState(env);const preflightReply=checkArtworkTitle(preflight,details.title,String(update.update_id));if(preflightReply){await say(preflightReply);return}
  const info=await telegram(env,'getFile',{file_id:file.file_id});
  const response=await fetch('https://api.telegram.org/file/bot'+env.BOT_TOKEN+'/'+info.file_path);
  if(!response.ok)throw Error('Image download failed');
@@ -172,17 +190,11 @@ async function handle(update,env){
  // Commit image and manifest together, using the branch ref as a compare-and-swap.
  // A retry reloads the current tree, so concurrent uploads cannot overwrite each other.
  for(let attempt=0;attempt<4;attempt++){
- const ref=await gh(env,'git/ref/heads/main');const head=ref.object.sha;
+ const state=await artworkState(env),{head,list}=state;
+ const blocked=checkArtworkTitle(state,details.title,id);if(blocked){await say(blocked);return}
  const commit=await gh(env,'git/commits/'+head);
- const manifest=await gh(env,'contents/artworks.json?ref='+head);
- const list=JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(manifest.content.replace(/\s/g,'')),c=>c.charCodeAt(0))));
- if(!Array.isArray(list))throw Error('Invalid artwork manifest');
- let tombstones=[];
- try{const file=await gh(env,'contents/telegram/deletions.json?ref='+head);tombstones=JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(file.content.replace(/\s/g,'')),c=>c.charCodeAt(0))))}catch(error){if(!/^GitHub 404 /.test(error.message))throw error}
- if(!Array.isArray(tombstones))throw Error('Invalid deletion ledger');
- if(tombstones.some(entry=>entry.uploadId===id||entry.src===path)){await say('This upload was deleted and will not be republished. Send the media again as a new message to upload it again.');return}
- if(list.some(w=>w.uploadId===id)){await say('This upload is already saved.');return}
- const entry={...details,src:path,type,animated:!!(detected.animated||media.animation),uploadId:id,uploadedAt:new Date().toISOString()};
+ const titleCheckedAt=new Date().toISOString();
+ const entry={...details,titleCheckedAt,titleCheckedHead:head,src:path,type,animated:!!(detected.animated||media.animation),uploadId:id,uploadedAt:new Date().toISOString()};
  const image=await gh(env,'git/blobs','POST',{encoding:'base64',content:b64(bytes)});
  const json=await gh(env,'git/blobs','POST',{encoding:'base64',content:encode(JSON.stringify([entry,...list],null,2)+'\n')});
  const tree=await gh(env,'git/trees','POST',{base_tree:commit.tree.sha,tree:[{path,mode:'100644',type:'blob',sha:image.sha},{path:'artworks.json',mode:'100644',type:'blob',sha:json.sha}]});
