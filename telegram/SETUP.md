@@ -93,3 +93,12 @@ Use /bulkstatus for collection/processing counts. /cancel stops remaining items 
 BULK_SESSIONS is a per-author SQLite Durable Object. Collection is persisted synchronously, avoiding lost album items. /done schedules one image per durable alarm; transient failures retry automatically up to the platform retry limit, and /done resumes a paused batch. Collection expires after two hours. Completion means all items were processed, not all accepted: inspect each Saved/rejected reply.
 Deploy worker.mjs, blog.mjs, upgrades.mjs, thumbnails.mjs, bulk.mjs and bulk-object.mjs together. Preserve all existing bindings/secrets and apply the bulk-v1 new_sqlite_classes migration once. Local Node tests use a minimal cloudflare:workers loader stub; they test batch logic and existing webhook behavior, not the deployed SQLite/alarm runtime:
 node --loader ./telegram/test-cloudflare-loader.mjs --test telegram/bulk.test.mjs telegram/worker.test.mjs telegram/delete.test.mjs telegram/blog.test.mjs
+
+## Edit artwork titles and notes
+Send /edit Current title | New title | New notes. Match the full current title (including emoji and batch number), or use id:UPLOAD_ID instead. Matching ignores case and repeated whitespace. Leave the new title empty to keep it; omit the notes field to keep notes; include an empty notes field to clear notes. Additional | fields join as notes. Edited titles allow at most 38 visible characters and notes at most 800 characters.
+The bot atomically updates the manifest, artwork social preview page and an edit-delivery ledger. Media src, thumbnail, original upload time, gallery order and upload ID remain unchanged. Duplicate normalized titles, ambiguous targets, missing artwork and conflicting edits are rejected. Telegram retries cannot replay an older edit over a newer edit. Only Sarah's authorized private chat can edit.
+Examples:
+/edit Old title | New title
+/edit Current title | | Replacement notes
+/edit id:166307900 | New title | Notes
+Deploy editing.mjs alongside the other Worker modules. Run node --loader ./telegram/test-cloudflare-loader.mjs --test telegram/editing.test.mjs telegram/worker.test.mjs telegram/delete.test.mjs telegram/blog.test.mjs.
