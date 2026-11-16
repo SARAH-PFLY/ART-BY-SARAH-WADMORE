@@ -18,6 +18,20 @@ That same month, **SYNC Network** named **Sarah PU51FLY** among the artists cont
 
 Today, Sarah’s work connects her longstanding art practice with digital ownership, character creation and collective storytelling. Through her individual artwork and the Crypto Moongirls, she continues to build a creative identity rooted in the Graffiti Kings community.
 
+## Queen Sarah PFLY — the fictional ruler of Block Topia
+
+Queen Sarah PFLY is Sarah’s character within the **Crypto Moonboys** universe. In *The Hard Fork – Rise of the HODL Warriors*, she leads the **Crypto Moongirls**, the ruling order of **Block Topia**, a fortified city built amid the collapse of a blockchain-connected world.
+
+Her origin centres on the **Self-Fork Project**, a lunar experiment intended to preserve human consciousness across blockchain nodes. She returns as a distributed intelligence with a human past: a **Data Sovereign** whose reach extends through the systems sustaining the city.
+
+The Queen promises security, but her regime demands obedience. The **Hard Fork programme** and its Games turn survival into a means of selection and control. Outside her walls, the **GraffPUNKS** defend cultural memory and independence; **Jodie ZOOM 2000** emerges as a threat to the Queen’s authority.
+
+The arrival of **NULL THE PROPHET** and the **Echo Fork** threatens the reality her systems depend upon. Her story explores identity, power and the tension between protection and freedom.
+
+**This is fictional project lore, separate from Sarah Wadmore’s real-world biography.**
+
+[Read The Hard Fork – Rise of the HODL Warriors](https://graffpunks.substack.com/p/the-hard-fork-rise-of-the-hodl-warriors).
+
 ## Collections and archive
 
 - [Graffiti Queens — contemporary exhibition coverage](https://cryptobriefing.com/pussy-riot-talk-nfts-ahead-major-graffiti-queens-expo/)
