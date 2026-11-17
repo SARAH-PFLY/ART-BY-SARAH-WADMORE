@@ -103,12 +103,17 @@ function syncPreviews(){
  video.play().catch(()=>{});
  }else{video.pause();if(experience.saving&&video.hasAttribute('src')){video.removeAttribute('src');video.load()}}
  });
+ document.querySelectorAll('.upload-card video[data-preview]').forEach(video=>{
+  const allowed=video.dataset.visible==='true'&&!experience.saving&&!document.hidden;
+  if(allowed&&!video.hasAttribute('src'))video.src=video.dataset.src;
+  else if(!allowed&&video.hasAttribute('src')){video.removeAttribute('src');video.load()}
+ });
 }
 reducedMotion.addEventListener('change',syncPreviews);
 document.addEventListener('visibilitychange',syncPreviews);
 let works=[],current=0,opener=null;
 const strip=document.querySelector('#upload-strip'),rail=document.querySelector('#upload-rail');
-let stripTimer;
+let stripTimer,stripObserver;
 function scrollStrip(direction){
  const card=rail.querySelector('.upload-card');if(!card)return;
  const step=card.getBoundingClientRect().width+8;
@@ -125,12 +130,14 @@ function openArtwork(index,button){
  show(index);box.showModal();document.body.style.overflow='hidden';document.querySelector('#close').focus();
 }
 function renderStrip(){
+ stripObserver?.disconnect();
+ stripObserver=new IntersectionObserver(entries=>{for(const entry of entries)entry.target.dataset.visible=String(entry.isIntersecting);syncPreviews()},{root:rail});
  rail.replaceChildren();
  works.forEach((work,index)=>{
   const button=document.createElement('button');button.type='button';button.className='upload-card';
   button.setAttribute('aria-label','Open '+work.title+' fullscreen');
   if(isVideo(work)&&!work.thumbnail){
-   const video=document.createElement('video');video.src=work.src;video.muted=true;video.playsInline=true;video.preload='metadata';video.setAttribute('aria-hidden','true');button.append(video);
+   const video=document.createElement('video');video.dataset.src=work.src;video.dataset.preview='true';video.muted=true;video.playsInline=true;video.preload='metadata';video.setAttribute('aria-hidden','true');stripObserver.observe(video);button.append(video);
   }else{
    const img=document.createElement('img');img.src=work.thumbnail||work.src;img.alt='';img.loading=index<4?'eager':'lazy';img.decoding='async';button.append(img);
   }
@@ -139,7 +146,7 @@ function renderStrip(){
   button.addEventListener('click',()=>openArtwork(index,button));rail.append(button);
  });
  strip.hidden=!works.length;
- rail.scrollLeft=0;startStrip();
+ rail.scrollLeft=0;syncPreviews();startStrip();
 }
 strip.querySelector('.prev-strip').addEventListener('click',()=>scrollStrip(-1));
 strip.querySelector('.next-strip').addEventListener('click',()=>scrollStrip(1));
