@@ -64,10 +64,26 @@ header{height:auto;min-height:76px;flex-wrap:wrap;gap:16px;padding-top:16px;padd
 
 /* Homepage navigation stays black over the murals, including injected controls. */
 body.home-page>header,body.home-page>header *{color:#000!important;-webkit-text-fill-color:#000!important}body>header button{border-color:#0007}body>header :focus-visible{outline-color:#000}
+
+/* Bot uploads appear in a full-width, horizontally scrolling gallery. */
+#upload-strip{position:relative;width:100%;height:300px;overflow:hidden;background:#111}
+#upload-strip[hidden]{display:none}
+#upload-rail{display:flex;gap:8px;width:100%;height:100%;overflow-x:auto;overscroll-behavior-inline:contain;scroll-snap-type:x mandatory;scrollbar-width:none}
+#upload-rail::-webkit-scrollbar{display:none}
+.upload-card{position:relative;flex:0 0 clamp(210px,38vw,720px);height:300px;padding:0;border:0;background:#171717;scroll-snap-align:start;overflow:hidden}
+.upload-card img,.upload-card video{display:block;width:100%;height:100%;object-fit:cover}
+.upload-card:focus-visible{outline:3px solid #fff;outline-offset:-5px}
+.upload-card .upload-title{position:absolute;inset:auto 0 0;padding:28px 12px 12px;text-align:left;font-size:12px;background:linear-gradient(transparent,#000b);text-shadow:0 1px 3px #000}
+.upload-card .play-badge{z-index:1}
+.strip-arrow{position:absolute;z-index:2;top:50%;transform:translateY(-50%);width:42px;height:42px;border:1px solid #fff8;border-radius:50%;background:#000b;color:#fff;font-size:27px;line-height:1}
+.strip-arrow.prev-strip{left:12px}.strip-arrow.next-strip{right:12px}
+@media(max-width:650px){.upload-card{flex-basis:72vw}.strip-arrow{width:36px;height:36px}.strip-arrow.prev-strip{left:6px}.strip-arrow.next-strip{right:6px}}
+@media(prefers-reduced-motion:reduce){#upload-rail{scroll-behavior:auto}}
 </style><script defer src="/assets/blog-nav.js"></script><link rel="canonical" href="https://sarahwadmore.com/"><meta property="og:type" content="website"><meta property="og:title" content="Art by Sarah Wadmore"><meta property="og:description" content="Explore Sarah Wadmore’s artwork gallery and studio journal."><meta property="og:url" content="https://sarahwadmore.com/"><meta name="twitter:card" content="summary"><link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="alternate" type="application/rss+xml" title="Sarah Wadmore — Journal" href="/feed.xml"><script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"Art by Sarah Wadmore","url":"https://sarahwadmore.com/"}</script><script src="https://telegram.org/js/telegram-web-app.js"></script><script defer src="/assets/telegram-mini-app.js"></script><link rel="stylesheet" href="/assets/telegram-mini-app.css"><script defer src="/assets/radio.js"></script><link rel="stylesheet" href="/assets/radio.css?v=20261117-home-black-2"><script defer src="/assets/native-share.js"></script><link rel="stylesheet" href="/assets/gallery-experience.css"><link rel="stylesheet" href="/assets/home-slideshow.css?v=20261117-home-black-2"></head>
 <body class="home-page">
 <header><h1><small>Art by</small>Sarah Wadmore the Material Girl 🌼🌸🌺</h1><nav aria-label="Main navigation"><a class="about-link" href="/about/">ABOUT</a><details class="blog-menu"><summary>BLOG</summary><div data-blog-links><a href="/blog/">View all posts →</a></div></details></nav></header>
 <section id="home-hero" aria-label="Sarah Wadmore murals" data-slides='["/artworks/FEMALE%20STREET%20ARTIST%20SARAH%20PFLY%20FROM%20ENGLAND%20MURAL%2016A.jpg","/artworks/FEMALE%20STREET%20ARTIST%20SARAH%20PFLY%20FROM%20ENGLAND%20MURAL%201A.jpg","/artworks/FEMALE%20STREET%20ARTIST%20SARAH%20PFLY%20FROM%20ENGLAND%20MURAL%202A.jpg","/artworks/FEMALE%20STREET%20ARTIST%20SARAH%20WADMORE%20PFLY%20FROM%20ENGLAND%20MURAL%202.jpg"]'><button type="button" class="hero-open"><img src="/artworks/FEMALE%20STREET%20ARTIST%20SARAH%20PFLY%20FROM%20ENGLAND%20MURAL%2016A.jpg" alt="Street art mural by Sarah Wadmore (PFLY), England" width="1536" height="1024" fetchpriority="high" loading="eager" decoding="async"></button><div class="hero-controls" aria-label="Mural slideshow controls"><button type="button" class="hero-prev" aria-label="Previous mural">‹</button><span class="hero-count"></span><button type="button" class="hero-next" aria-label="Next mural">›</button><button type="button" class="hero-pause" aria-pressed="false">Pause</button></div></section><script src="/assets/home-slideshow.js"></script>
+<section id="upload-strip" aria-label="Latest artwork uploaded through Telegram" hidden><div id="upload-rail" role="group" aria-label="Scroll through uploaded artworks"></div><button type="button" class="strip-arrow prev-strip" aria-label="Scroll artworks left">‹</button><button type="button" class="strip-arrow next-strip" aria-label="Scroll artworks right">›</button></section>
 <p id="gallery-status" role="status" aria-live="polite">Loading artworks…</p><noscript><p style="padding:20px">Enable JavaScript to explore the interactive artwork wall. You can also <a href="/blog/">read the journal</a>.</p></noscript><main id="wall" aria-label="Artwork gallery"></main>
 <footer><span>© <span id="year"></span> Sarah Wadmore</span><span id="note">Demo tiles · Original artworks coming soon</span></footer>
 <dialog id="lightbox" aria-label="Artwork viewer"><div class="viewer"><img id="full" alt=""><video id="full-video" controls playsinline preload="metadata" hidden></video></div><div class="controls"><button class="control" id="share" aria-label="Share artwork">↗</button><button class="control" id="expand" aria-label="Enter device fullscreen">⛶</button><button class="control" id="close" aria-label="Close artwork viewer">×</button></div><button class="control prev" id="prev" aria-label="Previous artwork">‹</button><button class="control next" id="next" aria-label="Next artwork">›</button><p id="media-status" role="status" aria-live="polite"></p><div id="detail"></div></dialog>
@@ -91,6 +107,49 @@ function syncPreviews(){
 reducedMotion.addEventListener('change',syncPreviews);
 document.addEventListener('visibilitychange',syncPreviews);
 let works=[],current=0,opener=null;
+const strip=document.querySelector('#upload-strip'),rail=document.querySelector('#upload-rail');
+let stripTimer;
+function scrollStrip(direction){
+ const card=rail.querySelector('.upload-card');if(!card)return;
+ const step=card.getBoundingClientRect().width+8;
+ const end=rail.scrollWidth-rail.clientWidth;
+ const destination=direction>0&&rail.scrollLeft>=end-2?0:direction<0&&rail.scrollLeft<=2?end:rail.scrollLeft+step*direction;
+ rail.scrollTo({left:destination,behavior:reducedMotion.matches?'instant':'smooth'});
+}
+function startStrip(){
+ clearInterval(stripTimer);
+ if(!reducedMotion.matches&&!document.hidden&&rail.scrollWidth>rail.clientWidth)stripTimer=setInterval(()=>scrollStrip(1),3500);
+}
+function openArtwork(index,button){
+ opener=button;experience.savePosition();document.querySelectorAll('.tile video').forEach(video=>video.pause());
+ show(index);box.showModal();document.body.style.overflow='hidden';document.querySelector('#close').focus();
+}
+function renderStrip(){
+ rail.replaceChildren();
+ works.forEach((work,index)=>{
+  const button=document.createElement('button');button.type='button';button.className='upload-card';
+  button.setAttribute('aria-label','Open '+work.title+' fullscreen');
+  if(isVideo(work)&&!work.thumbnail){
+   const video=document.createElement('video');video.src=work.src;video.muted=true;video.playsInline=true;video.preload='metadata';video.setAttribute('aria-hidden','true');button.append(video);
+  }else{
+   const img=document.createElement('img');img.src=work.thumbnail||work.src;img.alt='';img.loading=index<4?'eager':'lazy';img.decoding='async';button.append(img);
+  }
+  if(isVideo(work)){const badge=document.createElement('span');badge.className='play-badge';badge.textContent='▶';badge.setAttribute('aria-hidden','true');button.append(badge)}
+  const title=document.createElement('span');title.className='upload-title';title.textContent=work.title;button.append(title);
+  button.addEventListener('click',()=>openArtwork(index,button));rail.append(button);
+ });
+ strip.hidden=!works.length;
+ rail.scrollLeft=0;startStrip();
+}
+strip.querySelector('.prev-strip').addEventListener('click',()=>scrollStrip(-1));
+strip.querySelector('.next-strip').addEventListener('click',()=>scrollStrip(1));
+strip.addEventListener('pointerenter',()=>clearInterval(stripTimer));
+strip.addEventListener('pointerleave',startStrip);
+strip.addEventListener('focusin',()=>clearInterval(stripTimer));
+strip.addEventListener('focusout',()=>{if(!strip.contains(document.activeElement))startStrip()});
+document.addEventListener('visibilitychange',startStrip);
+reducedMotion.addEventListener('change',startStrip);
+window.addEventListener('resize',startStrip);
 const experience=GalleryExperience.create({wall,box,full,fullVideo,reducedMotion,getWorks:()=>works,getCurrent:()=>current,show:index=>show(index),syncPreviews:()=>syncPreviews(),layout:()=>layoutWall()});
 
 const galleryStatus=document.querySelector('#gallery-status'),mediaStatus=document.querySelector('#media-status');
@@ -228,7 +287,7 @@ function render(){
  img.addEventListener('load',layoutWall);img.addEventListener('loadedmetadata',layoutWall);img.addEventListener('error',layoutWall);
  const caption=document.createElement('span');caption.className='caption';caption.textContent=work.title+' ↗';button.append(img,caption);
  if(work.demo){const label=document.createElement('span');label.className='demo';label.textContent='DEMO TILE';button.append(label)}
- button.addEventListener('click',()=>{opener=button;experience.savePosition();document.querySelectorAll('.tile video').forEach(video=>video.pause());show(index);box.showModal();document.body.style.overflow='hidden';document.querySelector('#close').focus()});wall.append(button);
+ button.addEventListener('click',()=>openArtwork(index,button));wall.append(button);
  });
  layoutWall();
 }
@@ -248,13 +307,13 @@ async function init(){
  try{
  const response=await fetch('./artworks.json',{cache:'no-cache'});if(!response.ok)throw Error('Gallery unavailable');
  const data=await response.json();if(!Array.isArray(data))throw Error('Invalid gallery');
- works=experience.ordered(data.filter(w=>w&&typeof w.src==='string'&&typeof w.title==='string'));wall.replaceChildren();
+ works=experience.ordered(data.filter(w=>w&&typeof w.src==='string'&&typeof w.title==='string'));wall.replaceChildren();renderStrip();
  galleryStatus.textContent=works.length?'':'No artworks to display yet.';
  document.querySelector('#note').textContent='Select an artwork to explore';
  if(works.length){
  render();experience.restorePosition();
  const key=new URL(location.href).searchParams.get('art'),index=works.findIndex(work=>artworkKey(work)===key);
- if(key&&index>=0){opener=wall.querySelectorAll('.tile')[index];show(index);box.showModal();document.body.style.overflow='hidden';document.querySelector('#close').focus()}
+ if(key&&index>=0){opener=rail.querySelectorAll('.upload-card')[index];show(index);box.showModal();document.body.style.overflow='hidden';document.querySelector('#close').focus()}
  else if(key)galleryStatus.textContent='That artwork is no longer in the gallery. Explore the collection below.';
  }
  }catch{
