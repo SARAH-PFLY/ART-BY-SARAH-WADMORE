@@ -1,3 +1,7 @@
 .radio-toggle{font:inherit;font-size:10px;letter-spacing:.5px;color:#ddd;background:transparent;border:1px solid #666;border-radius:20px;padding:9px 10px;min-height:36px;cursor:pointer;white-space:nowrap}.radio-toggle[aria-pressed=true]{color:#90ee90;border-color:#90ee90}.radio-toggle:focus-visible{outline:2px solid #fff;outline-offset:3px}@media(max-width:650px){header nav{gap:10px}.radio-toggle{font-size:9px;padding:7px 8px}header{gap:10px}}
 body.radio-shell>:not(audio):not(#radio-content):not(script):not(style):not(link){display:none!important}
 @media(max-width:550px){body:not(.radio-shell) header{height:auto;min-height:76px;padding-top:12px;padding-bottom:12px;flex-wrap:wrap;row-gap:10px}header nav{flex-wrap:wrap;justify-content:flex-end;gap:14px}}
+
+/* Keep homepage mural navigation black; every other page retains white navigation. */
+body.home-page>header,body.home-page>header *{color:#000!important;-webkit-text-fill-color:#000!important}
+body:not(.home-page):not(:has(#home-hero))>header,body:not(.home-page):not(:has(#home-hero))>header *{color:#fff!important;-webkit-text-fill-color:#fff!important}
