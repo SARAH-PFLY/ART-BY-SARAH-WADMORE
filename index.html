@@ -155,10 +155,10 @@ function renderStrip(){
   button.addEventListener('click',()=>openArtwork(index,button));rail.append(button);
  });
  strip.hidden=!works.length;
- stripCycle=rail.scrollWidth+8;
+ const originals=[...rail.children];
+ stripCycle=originals.reduce((width,card)=>width+card.getBoundingClientRect().width+8,0);
  if(works.length){
   // Keep enough copies ahead for a seamless reset to the same artwork.
-  const originals=[...rail.children];
   while(rail.scrollWidth<stripCycle+rail.clientWidth+8){
    originals.forEach(original=>{
     const copy=original.cloneNode(true);
