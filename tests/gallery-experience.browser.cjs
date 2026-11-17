@@ -1,0 +1,111 @@
+// npm install --no-save playwright; set CHROME_EXECUTABLE if using a system browser.
+const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
+const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),http=require('node:http');
+const root=path.resolve(__dirname,'..');
+const types={'.html':'text/html','.js':'text/javascript','.css':'text/css','.json':'application/json','.jpg':'image/jpeg','.mp4':'video/mp4','.svg':'image/svg+xml'};
+const server=http.createServer((req,res)=>{
+ const pathname=decodeURIComponent(new URL(req.url,'http://test').pathname);
+ let file=path.resolve(root,'.'+pathname);
+ if(!file.startsWith(root+path.sep)&&file!==root){res.writeHead(403).end();return}
+ try{if(fs.statSync(file).isDirectory())file=path.join(file,'index.html');res.setHeader('Content-Type',types[path.extname(file)]||'application/octet-stream');res.end(fs.readFileSync(file))}catch{res.writeHead(404).end()}
+});
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+(async()=>{
+ await new Promise(r=>server.listen(0,'127.0.0.1',r));
+ const origin='http://127.0.0.1:'+server.address().port;
+ const browser=await chromium.launch({headless:true,...(process.env.CHROME_EXECUTABLE?{executablePath:process.env.CHROME_EXECUTABLE}:{})});
+ const actual=JSON.parse(fs.readFileSync(path.join(root,'artworks.json'),'utf8'));
+ const fixture=actual.slice(0,5).map(w=>({...w}));fixture[1].featured=true;
+ fixture.push({uploadId:'video',title:'Video fixture',type:'video',width:640,height:360,src:'artworks/telegram-166307847.mp4'});
+ const errors=[];
+ async function prepare(options={}){
+  const context=await browser.newContext(options);const page=await context.newPage();
+  page.on('pageerror',e=>errors.push(e.message));
+  await page.route('**/*',route=>{
+   const url=new URL(route.request().url());
+   if(url.origin!==origin)return route.abort();
+   if(url.pathname==='/artworks.json')return route.fulfill({json:fixture});
+   return route.continue();
+  });
+  return {context,page};
+ }
+ const {context,page}=await prepare({viewport:{width:1440,height:1000}});
+ const requests=[];page.on('request',r=>requests.push(new URL(r.url()).pathname));
+ await page.goto(origin);await page.waitForSelector('.tile img.is-loaded');
+ assert.equal(await page.locator('.tile').first().getAttribute('data-artwork'),fixture[1].uploadId);
+ assert.equal(await page.locator('.featured-badge').count(),1);
+ await page.locator('.tile').first().click();await page.waitForSelector('#full.is-loaded');
+ assert.ok((await page.locator('#full').getAttribute('src')).endsWith(fixture[1].src));
+ await page.waitForFunction(()=>document.querySelector('#full').style.width!=='');
+ await sleep(500);
+ assert.ok(requests.includes('/'+fixture[0].src),'next full image preloaded');
+ const imageCenter=await page.locator('#full').boundingBox();
+ await page.mouse.dblclick(imageCenter.x+imageCenter.width/2,imageCenter.y+imageCenter.height/2);
+ assert.equal(await page.locator('#zoom-reset').innerText(),'200%','desktop double-click zoom survives viewer pointer capture');
+ await page.mouse.dblclick(imageCenter.x+imageCenter.width/2,imageCenter.y+imageCenter.height/2);
+ assert.equal(await page.locator('#zoom-reset').innerText(),'100%','desktop double-click resets zoom');
+ await page.locator('#zoom-in').click();assert.equal(await page.locator('#zoom-reset').innerText(),'150%');
+ const transformBefore=await page.locator('#full').evaluate(e=>e.style.transform);
+ const rect=await page.locator('#full').boundingBox();
+ await page.mouse.move(rect.x+rect.width/2,rect.y+rect.height/2);await page.mouse.down();await page.mouse.move(rect.x+rect.width/2+90,rect.y+rect.height/2+60);await page.mouse.up();
+ assert.notEqual(await page.locator('#full').evaluate(e=>e.style.transform),transformBefore);
+ await page.keyboard.press('Escape');assert.equal(await page.locator('#zoom-reset').innerText(),'100%');assert.equal(await page.locator('#lightbox').evaluate(e=>e.open),true);
+ await page.locator('#next').click();assert.equal(await page.locator('#zoom-reset').innerText(),'100%');
+ await page.locator('#zoom-in').click();
+ await page.locator('#artwork-enquire').click();
+ assert.ok((await page.locator('#enquiry-message').inputValue()).includes(fixture[0].title));
+ assert.ok((await page.locator('#send-enquiry').getAttribute('href')).endsWith('enquire_'+fixture[0].uploadId));
+ assert.equal(await page.locator('#enquiry-panel').evaluate(e=>e.scrollWidth<=e.clientWidth),true);
+ await page.keyboard.press('Escape');assert.equal(await page.locator('#enquiry-panel').evaluate(e=>e.open),false);assert.equal(await page.locator('#zoom-reset').innerText(),'150%');await page.locator('#close').click();
+ await page.locator('.tile').last().click();
+ assert.equal(await page.locator('.viewer').evaluate(e=>e.dispatchEvent(new MouseEvent('dblclick',{bubbles:true,cancelable:true}))),true,'video viewer double-click keeps native behavior');
+ assert.equal(await page.locator('#full-video').evaluate(e=>e.dispatchEvent(new MouseEvent('dblclick',{bubbles:true,cancelable:true}))),true,'video double-click is not intercepted');
+ assert.equal(await page.locator('#zoom-reset').innerText(),'100%');await page.locator('#close').click();
+ await page.evaluate(()=>scrollTo(0,600));await sleep(100);
+ const y=await page.evaluate(()=>scrollY);
+ await page.goto(origin+'/about/');await page.goto(origin);
+ await page.waitForSelector('.tile img.is-loaded');await sleep(300);
+ assert.ok(Math.abs(await page.evaluate(()=>scrollY)-y)<8,'gallery position restored: '+JSON.stringify({expected:y,...await page.evaluate(()=>({actual:scrollY,saved:sessionStorage.getItem('sarah:gallery-position'),height:document.documentElement.scrollHeight}))}));
+ await page.evaluate(()=>scrollTo(0,0));await page.locator('.tile').first().click();await page.waitForSelector('#full.is-loaded');
+ if(process.env.SCREENSHOT_DIR){fs.mkdirSync(process.env.SCREENSHOT_DIR,{recursive:true});await sleep(250);await page.screenshot({path:path.join(process.env.SCREENSHOT_DIR,'gallery-desktop.png')})}
+ await context.close();
+ const mobile=await prepare({viewport:{width:390,height:844},deviceScaleFactor:1,isMobile:true,hasTouch:true,reducedMotion:'reduce'});
+ await mobile.page.addInitScript(()=>localStorage.setItem('sarah:data-saving','on'));
+ const mobileRequests=[];mobile.page.on('request',r=>mobileRequests.push(new URL(r.url()).pathname));
+ await mobile.page.goto(origin);await mobile.page.waitForSelector('.tile img.is-loaded');
+ if(process.env.SCREENSHOT_DIR)await mobile.page.screenshot({path:path.join(process.env.SCREENSHOT_DIR,'gallery-mobile-grid.png')});
+ assert.equal(await mobile.page.locator('body').evaluate(e=>e.scrollWidth<=innerWidth),true);
+ assert.ok((await mobile.page.locator('.tile img').first().evaluate(e=>e.currentSrc)).includes('-360.jpg'));
+ assert.equal(await mobile.page.locator('.tile video').evaluate(e=>e.hasAttribute('src')),false);
+ await mobile.page.locator('.tile').first().click();await mobile.page.waitForSelector('#full.is-loaded');await sleep(500);
+ assert.ok(!mobileRequests.includes('/'+fixture[0].src),'data saver prevents next-image preload');
+ assert.equal(await mobile.page.locator('#viewer-hint').isVisible(),true);
+ const cdp=await mobile.context.newCDPSession(mobile.page);
+ await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:160,y:350},{x:230,y:350}]});
+ await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:100,y:350},{x:290,y:350}]});
+ await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+ assert.notEqual(await mobile.page.locator('#zoom-reset').innerText(),'100%','pinch zoom works');
+ await mobile.page.locator('#zoom-reset').click();
+ const before=await mobile.page.locator('#full').getAttribute('src');
+ await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:300,y:350}]});
+ await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:100,y:350}]});
+ await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+ assert.notEqual(await mobile.page.locator('#full').getAttribute('src'),before,'swipe changes artwork');
+ await mobile.page.locator('#artwork-enquire').click();
+ assert.ok((await mobile.page.locator('#enquiry-message').inputValue()).includes('Artwork:'));
+ if(process.env.SCREENSHOT_DIR)await mobile.page.screenshot({path:path.join(process.env.SCREENSHOT_DIR,'gallery-mobile-enquiry.png')});
+ await mobile.page.locator('#close-enquiry').click();await mobile.page.locator('#close').click();
+ await mobile.page.locator('#data-saving').click(); // on -> off
+ assert.match(await mobile.page.locator('#data-saving').getAttribute('aria-label'),/off/);
+ assert.equal(await mobile.page.locator('.tile img').first().evaluate(e=>!!e.srcset),true);
+ await mobile.context.close();
+ const auto=await prepare({viewport:{width:390,height:844}});
+ await auto.page.addInitScript(()=>{localStorage.removeItem('sarah:data-saving');Object.defineProperty(navigator,'connection',{value:{saveData:true,effectiveType:'2g',addEventListener(){}}})});
+ await auto.page.goto(origin);await auto.page.waitForSelector('.tile img.is-loaded');
+ assert.match(await auto.page.locator('#data-saving').getAttribute('aria-label'),/auto \(on\)/);
+ assert.equal(await auto.page.locator('.tile video').evaluate(e=>e.hasAttribute('src')),false);
+ await auto.context.close();
+ assert.deepEqual(errors,[]);
+ await browser.close();server.close();
+ console.log('Desktop/mobile browsing: featured order, full originals, bounded preload, zoom/pan/pinch/swipe, enquiry links, position restore, responsive previews, data saving, reduced-motion and overflow passed');
+})().catch(error=>{console.error(error);server.close();process.exit(1)});

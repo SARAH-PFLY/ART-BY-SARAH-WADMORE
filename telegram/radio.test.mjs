@@ -67,7 +67,7 @@ assert.match(html,/#lightbox \.prev,#lightbox \.next\{z-index:6;pointer-events:a
 assert.match(html,/\.prev,.next\{top:auto;bottom:18px\}/);
 assert.match(html,/if\(event.target===fullVideo\)return/);
 assert.match(html,/<video id="full-video" controls/);
-const viewer={works:[{title:'First',src:'first.png'},{title:'A long artwork title that wraps across several lines',src:'second.gif'},{title:'Video',src:'third.mp4',type:'video'},{title:'Fourth',src:'fourth.png'}],current:0,full:{removeAttribute(){}},fullVideo:{removeAttribute(){},setAttribute(){},load(){},play:()=>Promise.resolve()},mediaStatus:{},detail:{replaceChildren(title){this.title=title},append(){}},isVideo:w=>w.type==='video',setArtworkURL(){},stopVideo(){},reducedMotion:{matches:false},document:{createTextNode:t=>t,createElement:()=>({})}};
+const viewer={experience:{onShow(){},saving:false},works:[{title:'First',src:'first.png'},{title:'A long artwork title that wraps across several lines',src:'second.gif'},{title:'Video',src:'third.mp4',type:'video'},{title:'Fourth',src:'fourth.png'}],current:0,full:{removeAttribute(){}},fullVideo:{removeAttribute(){},setAttribute(){},load(){},play:()=>Promise.resolve()},mediaStatus:{},detail:{replaceChildren(title){this.title=title},append(){}},isVideo:w=>w.type==='video',setArtworkURL(){},stopVideo(){},reducedMotion:{matches:false},document:{createTextNode:t=>t,createElement:()=>({})}};
 runInNewContext(html.match(/function show\(index\)\{[^\n]+/)[0],viewer);
 const arrows={};viewer.document.querySelector=s=>arrows[s]||=( {} );
 runInNewContext(html.match(/document.querySelector\('#prev'\).onclick=[^\n]+/)[0],viewer);

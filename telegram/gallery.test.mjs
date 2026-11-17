@@ -5,8 +5,8 @@ const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');
 const sync=html.match(/function syncPreviews\(\)\{[\s\S]*?\n\}/)[0];
 const onClose=html.match(/box.addEventListener\('close',\(\)=>\{([^\n]+)\}\);/)[1];
 let played=0,paused=0,stopped=0,focused=0;
-const video={dataset:{visible:'true'},play(){played++;return Promise.resolve()},pause(){paused++}};
-const context={document:{querySelectorAll:()=>[video],body:{style:{}}},reducedMotion:{matches:false},box:{open:false},clearArtworkURL(){},stopVideo(){stopped++},opener:{focus(){focused++}}};
+const video={dataset:{visible:'true',src:'artworks/video.mp4'},hasAttribute(){return false},removeAttribute(){},load(){},play(){played++;return Promise.resolve()},pause(){paused++}};
+const context={document:{querySelectorAll:()=>[video],body:{style:{}}},experience:{saving:false},reducedMotion:{matches:false},box:{open:false},clearArtworkURL(){},stopVideo(){stopped++},opener:{focus(){focused++}}};
 runInNewContext(sync,context);
 runInNewContext(onClose,context);
 assert.equal(played,1);assert.equal(stopped,1);assert.equal(focused,1);
@@ -17,5 +17,6 @@ console.log('Passed animation close/resume, reduced motion, offscreen and modal-
 
 context.box.open=false;context.document.hidden=true;runInNewContext('syncPreviews()',context);assert.equal(played,1);assert.equal(paused,4);
 context.document.hidden=false;runInNewContext('syncPreviews()',context);assert.equal(played,2);
+context.experience.saving=true;runInNewContext('syncPreviews()',context);assert.equal(played,2);assert.equal(paused,5);
 assert.ok(!html.includes('if(work.animated){img.loop=true;'));
 console.log('All homepage videos use visibility-controlled looping; hidden tabs pause');
