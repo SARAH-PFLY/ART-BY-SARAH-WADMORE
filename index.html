@@ -172,8 +172,6 @@ function renderStrip(){
 }
 strip.querySelector('.prev-strip').addEventListener('click',()=>scrollStrip(-1));
 strip.querySelector('.next-strip').addEventListener('click',()=>scrollStrip(1));
-strip.addEventListener('pointerenter',stopStrip);
-strip.addEventListener('pointerleave',startStrip);
 strip.addEventListener('focusin',stopStrip);
 strip.addEventListener('focusout',()=>{if(!strip.contains(document.activeElement))startStrip()});
 document.addEventListener('visibilitychange',startStrip);
