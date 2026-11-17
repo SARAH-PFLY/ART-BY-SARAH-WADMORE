@@ -7,3 +7,15 @@
 #hero-fullscreen::backdrop{background:#000}#hero-fullscreen>img{display:block;width:100%;height:100%;object-fit:contain}
 #hero-fullscreen button{width:44px;height:44px;border:1px solid #ffffff50;border-radius:50%;background:#222c;color:#fff;font-size:26px;cursor:pointer}.hero-modal-tools{position:absolute;top:12px;right:12px;display:flex;gap:8px}.hero-modal-prev,.hero-modal-next{position:absolute;top:calc(50% - 22px)}.hero-modal-prev{left:10px}.hero-modal-next{right:10px}
 @media(max-width:650px){#hero-fullscreen{padding:65px 10px}.hero-controls{bottom:8px;gap:6px;padding:2px 5px}.hero-controls button{min-height:32px}}
+
+/* Homepage navigation sits directly over the mural, with no header strip. */
+body>header{position:absolute;inset:0 0 auto;z-index:30;background:transparent;color:#000;border:0}
+body>header h1,body>header .about-link,body>header a,body>header summary,body>header button{color:#000}
+body>header .radio-toggle,body>header .radio-toggle[aria-pressed=true],body>header .gallery-setting{color:#000;border-color:#0007;background:transparent}
+body>header .blog-menu>div{background:#fffffff2;color:#000;border-color:#0003;box-shadow:0 12px 35px #0002}
+body>header .blog-menu>div a{color:#000}
+body>header .blog-menu>div a:hover{background:#0000000a}
+body>header :focus-visible{outline:2px solid #000;outline-offset:3px}
+.hero-controls{color:#000;background:#ffffffe0;border-color:#0003}
+#hero-fullscreen button{color:#000;background:#ffffffe6;border-color:#0005}
+.telegram-mini-app body>header{top:var(--app-safe-top,0px);left:var(--app-safe-left,0px);right:var(--app-safe-right,0px)}
