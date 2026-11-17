@@ -68,12 +68,12 @@ body.home-page>header,body.home-page>header *{color:#000!important;-webkit-text-
 /* Bot uploads appear in a full-width, horizontally scrolling gallery. */
 #upload-strip{position:relative;width:100%;height:300px;overflow:hidden;background:#111}
 #upload-strip[hidden]{display:none}
-#upload-rail{display:flex;gap:8px;width:100%;height:100%;overflow-x:auto;overscroll-behavior-inline:contain;scroll-snap-type:x mandatory;scrollbar-width:none}
+#upload-rail{display:flex;gap:8px;width:100%;height:100%;overflow-x:auto;overscroll-behavior-inline:contain;scroll-snap-type:none;scrollbar-width:none}
 #upload-rail::-webkit-scrollbar{display:none}
-.upload-card{position:relative;flex:0 0 clamp(210px,38vw,720px);height:300px;padding:0;border:0;background:#171717;scroll-snap-align:start;overflow:hidden}
-.upload-card img,.upload-card video{display:block;width:100%;height:100%;object-fit:cover}
+.upload-card{position:relative;flex:0 0 clamp(210px,38vw,720px);height:300px;padding:0;border:0;background:#171717;overflow:hidden}
+.upload-card img,.upload-card video{display:block;width:100%;height:calc(100% - 28px);object-fit:contain}
 .upload-card:focus-visible{outline:3px solid #fff;outline-offset:-5px}
-.upload-card .upload-title{position:absolute;inset:auto 0 0;padding:28px 12px 12px;text-align:left;font-size:12px;background:linear-gradient(transparent,#000b);text-shadow:0 1px 3px #000}
+.upload-card .upload-title{position:absolute;inset:auto 0 0;height:28px;padding:6px 12px;text-align:left;font-size:12px;background:#171717;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 .upload-card .play-badge{z-index:1}
 .strip-arrow{position:absolute;z-index:2;top:50%;transform:translateY(-50%);width:42px;height:42px;border:1px solid #fff8;border-radius:50%;background:#000b;color:#fff;font-size:27px;line-height:1}
 .strip-arrow.prev-strip{left:12px}.strip-arrow.next-strip{right:12px}
@@ -113,17 +113,26 @@ reducedMotion.addEventListener('change',syncPreviews);
 document.addEventListener('visibilitychange',syncPreviews);
 let works=[],current=0,opener=null;
 const strip=document.querySelector('#upload-strip'),rail=document.querySelector('#upload-rail');
-let stripTimer,stripObserver;
+let stripFrame,stripObserver,stripCycle=0,stripLast=0,stripPauseUntil=0;
 function scrollStrip(direction){
  const card=rail.querySelector('.upload-card');if(!card)return;
- const step=card.getBoundingClientRect().width+8;
- const end=rail.scrollWidth-rail.clientWidth;
- const destination=direction>0&&rail.scrollLeft>=end-2?0:direction<0&&rail.scrollLeft<=2?end:rail.scrollLeft+step*direction;
- rail.scrollTo({left:destination,behavior:reducedMotion.matches?'instant':'smooth'});
+ stripPauseUntil=performance.now()+1800;
+ if(direction<0&&rail.scrollLeft<card.getBoundingClientRect().width+8&&stripCycle)rail.scrollLeft+=stripCycle;
+ rail.scrollBy({left:direction*(card.getBoundingClientRect().width+8),behavior:reducedMotion.matches?'instant':'smooth'});
 }
+function stopStrip(){cancelAnimationFrame(stripFrame);stripFrame=0;stripLast=0}
 function startStrip(){
- clearInterval(stripTimer);
- if(!reducedMotion.matches&&!document.hidden&&rail.scrollWidth>rail.clientWidth)stripTimer=setInterval(()=>scrollStrip(1),3500);
+ stopStrip();
+ if(reducedMotion.matches||document.hidden||box.open||!stripCycle)return;
+ function tick(now){
+  const elapsed=stripLast?Math.min(now-stripLast,50):0;stripLast=now;
+  if(now>=stripPauseUntil){
+   rail.scrollLeft+=elapsed*.022;
+   if(rail.scrollLeft>=stripCycle)rail.scrollLeft-=stripCycle;
+  }
+  stripFrame=requestAnimationFrame(tick);
+ }
+ stripFrame=requestAnimationFrame(tick);
 }
 function openArtwork(index,button){
  opener=button;experience.savePosition();document.querySelectorAll('.tile video').forEach(video=>video.pause());
@@ -135,7 +144,7 @@ function renderStrip(){
  rail.replaceChildren();
  works.forEach((work,index)=>{
   const button=document.createElement('button');button.type='button';button.className='upload-card';
-  button.setAttribute('aria-label','Open '+work.title+' fullscreen');
+  button.setAttribute('aria-label','Open '+work.title+' fullscreen');button.dataset.index=String(index);
   if(isVideo(work)&&!work.thumbnail){
    const video=document.createElement('video');video.dataset.src=work.src;video.dataset.preview='true';video.muted=true;video.playsInline=true;video.preload='metadata';video.setAttribute('aria-hidden','true');stripObserver.observe(video);button.append(video);
   }else{
@@ -146,13 +155,26 @@ function renderStrip(){
   button.addEventListener('click',()=>openArtwork(index,button));rail.append(button);
  });
  strip.hidden=!works.length;
+ stripCycle=rail.scrollWidth+8;
+ if(works.length){
+  // Keep enough copies ahead for a seamless reset to the same artwork.
+  const originals=[...rail.children];
+  while(rail.scrollWidth<stripCycle+rail.clientWidth+8){
+   originals.forEach(original=>{
+    const copy=original.cloneNode(true);
+    copy.addEventListener('click',()=>openArtwork(Number(copy.dataset.index),copy));
+    const preview=copy.querySelector('video[data-preview]');if(preview)stripObserver.observe(preview);
+    rail.append(copy);
+   });
+  }
+ }
  rail.scrollLeft=0;syncPreviews();startStrip();
 }
 strip.querySelector('.prev-strip').addEventListener('click',()=>scrollStrip(-1));
 strip.querySelector('.next-strip').addEventListener('click',()=>scrollStrip(1));
-strip.addEventListener('pointerenter',()=>clearInterval(stripTimer));
+strip.addEventListener('pointerenter',stopStrip);
 strip.addEventListener('pointerleave',startStrip);
-strip.addEventListener('focusin',()=>clearInterval(stripTimer));
+strip.addEventListener('focusin',stopStrip);
 strip.addEventListener('focusout',()=>{if(!strip.contains(document.activeElement))startStrip()});
 document.addEventListener('visibilitychange',startStrip);
 reducedMotion.addEventListener('change',startStrip);
@@ -301,7 +323,7 @@ function render(){
 function show(index){current=(index+works.length)%works.length;const work=works[current];experience.onShow(work);setArtworkURL();mediaStatus.textContent='Loading artwork…';stopVideo();full.hidden=isVideo(work);if(isVideo(work)){full.removeAttribute('src');fullVideo.hidden=false;fullVideo.src=work.src;fullVideo.setAttribute('aria-label',work.title);fullVideo.loop=!!work.animated;fullVideo.muted=!!work.animated;fullVideo.load();if(work.animated&&!reducedMotion.matches&&!experience.saving)fullVideo.play().catch(()=>{})}else{full.src=work.src;full.alt=work.title}detail.replaceChildren(document.createTextNode(work.title));const meta=document.createElement('span');meta.textContent=(current+1)+' / '+works.length+(work.demo?' · Layout placeholder':work.medium?' · '+work.medium:'');detail.append(meta)}
 async function closeViewer(){if(window.__sarahMiniApp)window.__sarahMiniApp.exitFullscreen();else if(document.fullscreenElement&&document.exitFullscreen)await document.exitFullscreen().catch(()=>{});box.close()}
 document.querySelector('#close').onclick=closeViewer;
-box.addEventListener('close',()=>{stopVideo();clearArtworkURL();document.body.style.overflow='';syncPreviews();opener?.focus()});
+box.addEventListener('close',()=>{stopVideo();clearArtworkURL();document.body.style.overflow='';syncPreviews();opener?.focus();startStrip()});
 box.addEventListener('cancel',event=>{event.preventDefault();closeViewer()});
 document.querySelector('#prev').onclick=()=>show(current-1);document.querySelector('#next').onclick=()=>show(current+1);
 box.addEventListener('keydown',event=>{if(event.target===fullVideo)return;if(event.key==='ArrowLeft'){event.preventDefault();show(current-1)}if(event.key==='ArrowRight'){event.preventDefault();show(current+1)}});
