@@ -124,9 +124,9 @@ function startStrip(){
  stopStrip();
  if(reducedMotion.matches||document.hidden||box.open||!stripCycle)return;
  function tick(now){
-  const elapsed=stripLast?Math.min(now-stripLast,50):0;stripLast=now;
+  const elapsed=stripLast?Math.min(now-stripLast,1000):0;stripLast=now;
   if(now>=stripPauseUntil){
-   rail.scrollLeft+=elapsed*.022;
+   rail.scrollLeft+=elapsed*.032;
    if(rail.scrollLeft>=stripCycle)rail.scrollLeft-=stripCycle;
   }
   stripFrame=requestAnimationFrame(tick);
