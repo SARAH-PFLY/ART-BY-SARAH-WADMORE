@@ -27,10 +27,8 @@ root.createArtworkFileShare=function({navigator:nav=root.navigator,fetch:fetchFi
  function share(){
  if(busy)return;
  if(state==='loading'){onMessage('Preparing the original artwork. Tap Share image + caption when it is ready.');return}
- if(!nav.share){onMessage('Native sharing is unavailable here. Use Save artwork and Copy caption.');return}
- const text=getCaption(),payload={title:work?.title||'Art by Sarah Wadmore',text};
- if(state==='ready'&&file)payload.files=[file];
- else if(state!=='unsupported'&&state!=='unavailable'){onMessage('Open an artwork to share it.');return}
+ if(state!=='ready'||!file||!nav.share){onMessage('This browser cannot attach the artwork file. Use Save artwork and Copy caption.');return}
+ const text=getCaption(),payload={title:work?.title||'Art by Sarah Wadmore',text,files:[file]};
  busy=true;const id=token;
  // Call directly from the click, without waiting for a download or clipboard operation.
  try{

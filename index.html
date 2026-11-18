@@ -39,8 +39,8 @@ header nav{display:flex;align-items:center;gap:24px;font-size:12px}.about-link{c
 #share-panel #share-count{margin:8px 2px 16px;font-size:10px;color:#8f8d87;text-align:right}
 #share-panel .share-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 #share-panel .share-actions button,#share-panel .share-actions a{display:flex;justify-content:center;align-items:center;min-height:44px;padding:12px;border:1px solid #ffffff18;border-radius:12px;background:#ffffff04;color:#deddd8;font:inherit;font-size:12px;text-decoration:none;transition:background .2s,border-color .2s,transform .2s}
-#share-panel .share-actions #open-social{position:relative;isolation:isolate;overflow:hidden;background:linear-gradient(120deg,#e7dfcc,#faf8f0 55%,#d8cfba);border-color:#eee2c5;color:#25221b;font-weight:600;box-shadow:0 5px 18px #0004,inset 0 1px #fff;animation:share-glow 3s ease-in-out 3}
-#share-panel #open-social::after{content:'';position:absolute;inset:-100% auto -100% -70%;width:35%;background:linear-gradient(90deg,transparent,#fff9,transparent);transform:rotate(25deg);pointer-events:none;animation:share-shine 5s ease-in-out 3}
+#share-panel .share-actions #device-share{position:relative;isolation:isolate;overflow:hidden;background:linear-gradient(120deg,#e7dfcc,#faf8f0 55%,#d8cfba);border-color:#eee2c5;color:#25221b;font-weight:600;box-shadow:0 5px 18px #0004,inset 0 1px #fff;animation:share-glow 3s ease-in-out 3}
+#share-panel #device-share::after{content:'';position:absolute;inset:-100% auto -100% -70%;width:35%;background:linear-gradient(90deg,transparent,#fff9,transparent);transform:rotate(25deg);pointer-events:none;animation:share-shine 5s ease-in-out 3}
 #share-panel .share-actions button:hover,#share-panel .share-actions a:hover{transform:translateY(-1px);border-color:#ffffff40;background-color:#ffffff0c}
 #share-panel .share-actions .share-quiet{min-height:32px;border:0;background:transparent;color:#93918b;font-size:11px}
 #share-panel a[aria-disabled=true]{opacity:.4;animation:none!important}
@@ -202,7 +202,7 @@ function clearArtworkURL(){const url=new URL(location.href);url.searchParams.del
 const sharePanel=document.createElement('dialog');
 sharePanel.id='share-panel';
 sharePanel.setAttribute('aria-labelledby','share-heading');
-sharePanel.innerHTML="<div class=\"share-head\"><div><p class=\"share-eyebrow\">ART BY SARAH WADMORE</p><h2 id=\"share-heading\">Art worth sharing.</h2></div><button id=\"dismiss-share\" aria-label=\"Back to artwork\">×</button></div><label for=\"share-platform\">Share to</label><select id=\"share-platform\"><option value=\"x\">X</option><option value=\"facebook\">Facebook</option><option value=\"instagram\">Instagram</option><option value=\"tiktok\">TikTok</option></select><label for=\"share-caption\">Your caption · make it yours</label><textarea id=\"share-caption\" rows=\"5\"></textarea><p id=\"share-count\"></p><div class=\"share-actions\"><button id=\"copy-caption\">Copy caption</button><a id=\"open-social\" target=\"_blank\" rel=\"noopener noreferrer\">Continue</a><a class=\"share-quiet\" id=\"download-art\" download>↓ Save artwork</a><button class=\"share-quiet\" id=\"device-share\">Share image + caption ↗</button></div><p class=\"share-trust\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" aria-hidden=\"true\"><rect x=\"5\" y=\"10\" width=\"14\" height=\"11\" rx=\"3\"/><path d=\"M8 10V7a4 4 0 0 1 8 0v3\"/></svg>You choose what to post. Sign in on your platform.</p><details class=\"share-info\"><summary>How sharing works</summary><p id=\"share-help\"></p></details><p id=\"share-feedback\" role=\"status\" aria-live=\"polite\"></p>";
+sharePanel.innerHTML="<div class=\"share-head\"><div><p class=\"share-eyebrow\">ART BY SARAH WADMORE</p><h2 id=\"share-heading\">Art worth sharing.</h2></div><button id=\"dismiss-share\" aria-label=\"Back to artwork\">×</button></div><label for=\"share-platform\">Share to</label><select id=\"share-platform\"><option value=\"x\">X</option><option value=\"facebook\">Facebook</option><option value=\"instagram\">Instagram</option><option value=\"tiktok\">TikTok</option></select><label for=\"share-caption\">Your caption · make it yours</label><textarea id=\"share-caption\" rows=\"5\"></textarea><p id=\"share-count\"></p><div class=\"share-actions\"><button id=\"device-share\" disabled>Preparing artwork…</button><button id=\"copy-caption\">Copy caption</button><a class=\"share-quiet\" id=\"open-social\" target=\"_blank\" rel=\"noopener noreferrer\">Open platform</a><a class=\"share-quiet\" id=\"download-art\" download>↓ Save artwork</a></div><p class=\"share-trust\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" aria-hidden=\"true\"><rect x=\"5\" y=\"10\" width=\"14\" height=\"11\" rx=\"3\"/><path d=\"M8 10V7a4 4 0 0 1 8 0v3\"/></svg>You choose what to post. Sign in on your platform.</p><details class=\"share-info\"><summary>How sharing works</summary><p id=\"share-help\"></p></details><p id=\"share-feedback\" role=\"status\" aria-live=\"polite\"></p>";
 box.append(sharePanel);
 const platformSelect=sharePanel.querySelector('#share-platform'),captionInput=sharePanel.querySelector('#share-caption'),shareFeedback=sharePanel.querySelector('#share-feedback');
 let shareWork,shareURL;
@@ -238,14 +238,14 @@ function updateShareLink(){
  sharePanel.querySelector('#share-count').textContent=count+' / '+limit+' characters'+(platform==='tiktok'?' (caption kept within a conservative 2,200-character budget)':'')+(valid?'':' — shorten the caption to continue');
  const link=sharePanel.querySelector('#open-social');
  link.href=platform==='x'?'https://x.com/intent/tweet?'+new URLSearchParams({text:captionInput.value}):platform==='facebook'?'https://www.facebook.com/sharer/sharer.php?'+new URLSearchParams({u:shareURL}):platform==='instagram'?'https://www.instagram.com/':'https://www.tiktok.com/upload';
- link.textContent=platform==='x'?'Continue to X ↗':'Continue to '+platform[0].toUpperCase()+platform.slice(1)+' ↗';
+ link.textContent=platform==='x'?'Open X with text only ↗':platform==='facebook'?'Open Facebook with artwork link ↗':'Open '+platform[0].toUpperCase()+platform.slice(1)+' for manual upload ↗';
  link.setAttribute('aria-disabled',String(!valid));
 }
 function selectSharePlatform(){
  captionInput.value=makeShareCaption(shareWork,platformSelect.value,shareURL);
  sharePanel.querySelector('#share-help').textContent=platformSelect.value==='x'?
- 'X opens with your caption and artwork link. Sign in there if prompted. To attach the image itself, download it and add it to your post.':
- 'Copy your caption, then open the platform and sign in if prompted. Paste the caption before posting. For Instagram or TikTok, download the artwork and upload it in the app or website. For fewer steps, use Share image + caption on supported devices. Your chosen app may omit caption text, so check it before posting. Website platform links still require pasting and attaching media.';
+ 'For an attached image, use Share artwork file and choose X in your device share menu if available. The X web link carries text and the artwork URL only. Check the post before publishing; the app may omit the caption.':
+ 'For an attached file, use Share artwork file and choose your app in the device share menu if available. Direct website links cannot attach the file. If device sharing is unavailable, save the artwork and upload it manually; copy the caption separately. Check the post before publishing.';
  shareFeedback.textContent='';updateShareLink();
 }
 platformSelect.onchange=selectSharePlatform;
@@ -263,14 +263,14 @@ sharePanel.addEventListener('touchend',event=>event.stopPropagation(),{passive:t
 let fileShare=null;
 function prepareArtworkSharing(){
  const button=sharePanel.querySelector('#device-share');
- if(!window.createArtworkFileShare){button.textContent='Share caption + link';return}
+ if(!window.createArtworkFileShare){button.disabled=true;button.textContent='Image sharing unavailable here';return}
  if(!fileShare){
  fileShare=window.createArtworkFileShare({
  getCaption:()=>captionInput.value,
  onMessage:message=>{shareFeedback.textContent=message},
  onState:(state,work)=>{
- button.disabled=state==='loading';button.setAttribute('aria-busy',String(state==='loading'));
- button.textContent=state==='loading'?'Preparing artwork…':state==='ready'?(isVideo(work)?'Share video + caption ↗':'Share image + caption ↗'):'Share caption + link ↗';
+ button.disabled=state!=='ready';button.setAttribute('aria-busy',String(state==='loading'));
+ button.textContent=state==='loading'?'Preparing artwork…':state==='ready'?(isVideo(work)?'Share video file + caption ↗':'Share artwork file + caption ↗'):'Image sharing unavailable here';
  }
  });
  }
@@ -278,7 +278,7 @@ function prepareArtworkSharing(){
 }
 sharePanel.querySelector('#device-share').onclick=()=>{
  if(fileShare){fileShare.share();return}
- shareFeedback.textContent='Native sharing is unavailable here. Use Save artwork and Copy caption.';
+ shareFeedback.textContent='This browser cannot share the artwork file. Use Save artwork and Copy caption.';
 };
 sharePanel.addEventListener('close',()=>fileShare?.cancel());
 document.querySelector('#share').onclick=()=>{

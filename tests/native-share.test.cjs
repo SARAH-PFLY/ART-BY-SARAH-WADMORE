@@ -17,7 +17,7 @@ const work={title:'Original artwork',src:'artworks/original.jpg',thumbnail:'artw
  const unsupported=create({share:data=>{unsupportedShared=data;return Promise.resolve()}},async()=>{downloaded=true});
  const fallback=unsupported({getCaption:()=>caption,onState:s=>states.push(s),onMessage:m=>messages.push(m)});
  await fallback.prepare(work,'https://sarahwadmore.com/');assert.equal(downloaded,false);assert.equal(states.at(-1),'unsupported');
- fallback.share();assert.equal(unsupportedShared.text,caption);assert.equal(unsupportedShared.files,undefined);
+ fallback.share();assert.equal(unsupportedShared,undefined);assert.match(messages.at(-1),/cannot attach the artwork file/);
  const failed=create(nav,async()=>{throw Error('offline')})({getCaption:()=>caption,onState:s=>states.push(s),onMessage:m=>messages.push(m)});
  await failed.prepare(work,'https://sarahwadmore.com/');assert.equal(states.at(-1),'unavailable');
  let release;const delayed=create(nav,()=>new Promise(r=>release=r))({getCaption:()=>caption,onState:s=>states.push(s),onMessage:m=>messages.push(m)});
