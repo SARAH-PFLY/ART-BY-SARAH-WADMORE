@@ -13,26 +13,21 @@
  function ordered(works){return [...works.filter(w=>w.featured),...works.filter(w=>!w.featured)]}
  function create({wall,box,full,fullVideo,reducedMotion,getWorks,getCurrent,show,syncPreviews,layout}){
   const connection=navigator.connection||navigator.mozConnection||navigator.webkitConnection;
-  let preference=storage.get('sarah:data-saving')||'auto';
   const autoSaving=()=>!!connection?.saveData||/^(slow-2g|2g)$/.test(connection?.effectiveType||'');
-  let saving=preference==='on'||preference==='auto'&&autoSaving();
+  let saving=autoSaving();
   let preload=null,preloadURL='',preloadTimer=null,restorePending=true;
   let zoom=1,x=0,y=0,fitWidth=0,fitHeight=0,start=null,pinch=null,hadPinch=false;
   const pointers=new Map();
   const viewer=box.querySelector('.viewer');
-  const setting=document.createElement('button');setting.type='button';setting.className='gallery-setting';setting.id='data-saving';
-  document.querySelector('header nav').prepend(setting);
-  const settingNote=document.createElement('span');settingNote.className='sr-only';settingNote.role='status';setting.after(settingNote);
-  function settingLabel(){setting.textContent='DATA '+(preference==='auto'?'AUTO':saving?'SAVER':'FULL');setting.setAttribute('aria-label','Data saving: '+preference+(preference==='auto'?(saving?' (on)':' (off)'):'')+'. Click to change.');setting.title='Cycle data saving: Auto / On / Off';settingNote.textContent=saving?'Data saving on. Video previews and preloading paused.':'Full gallery browsing enabled.'}
   function cancelPreload(){clearTimeout(preloadTimer);preloadTimer=null;if(preload){preload.removeAttribute('src');preload=null}preloadURL=''}
-  function setPreference(value){
-   preference=value;storage.set('sarah:data-saving',value);saving=value==='on'||value==='auto'&&autoSaving();settingLabel();
-   cancelPreload();wall.querySelectorAll('.tile img').forEach(img=>applyPreview(img,img._artwork));syncPreviews();
+  function refreshSaving(){
+   const next=autoSaving();if(next===saving)return;
+   saving=next;cancelPreload();
+   wall.querySelectorAll('.tile img').forEach(img=>applyPreview(img,img._artwork));
+   syncPreviews();
    if(saving&&fullVideo.loop)fullVideo.pause();
   }
-  setting.onclick=()=>setPreference(preference==='auto'?'on':preference==='on'?'off':'auto');
-  connection?.addEventListener?.('change',()=>{if(preference==='auto')setPreference('auto')});
-  settingLabel();
+  connection?.addEventListener?.('change',refreshSaving);
   function applyPreview(img,work){
    if(!work)return;
    const options=previews(work);
@@ -157,7 +152,7 @@
   enquiry.addEventListener('close',()=>toolbar.querySelector('#artwork-enquire').focus());
   enquiry.addEventListener('keydown',event=>event.stopPropagation());
   enquiry.querySelector('#copy-enquiry').onclick=async()=>{try{await navigator.clipboard.writeText(draft.value);enquiryStatus.textContent='Message copied. Paste it into the Telegram enquiry.'}catch{draft.focus();draft.select();enquiryStatus.textContent='Select and copy your message, then paste it into Telegram.'}};
-  return {get saving(){return saving},bindImage,applyPreview,onShow,savePosition,restorePosition,resetZoom,get zoom(){return zoom},setPreference,ordered,previews};
+  return {get saving(){return saving},bindImage,applyPreview,onShow,savePosition,restorePosition,resetZoom,get zoom(){return zoom},ordered,previews};
  }
  root.GalleryExperience={create,ordered,previews};
 })(globalThis);
