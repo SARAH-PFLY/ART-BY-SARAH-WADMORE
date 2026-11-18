@@ -39,8 +39,6 @@ header nav{display:flex;align-items:center;gap:24px;font-size:12px}.about-link{c
 #share-panel #share-count{margin:8px 2px 16px;font-size:10px;color:#8f8d87;text-align:right}
 #share-panel .share-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 #share-panel .share-actions button,#share-panel .share-actions a{display:flex;justify-content:center;align-items:center;min-height:44px;padding:12px;border:1px solid #ffffff18;border-radius:12px;background:#ffffff04;color:#deddd8;font:inherit;font-size:12px;text-decoration:none;transition:background .2s,border-color .2s,transform .2s}
-#share-panel .share-actions #device-share{position:relative;isolation:isolate;overflow:hidden;background:linear-gradient(120deg,#e7dfcc,#faf8f0 55%,#d8cfba);border-color:#eee2c5;color:#25221b;font-weight:600;box-shadow:0 5px 18px #0004,inset 0 1px #fff;animation:share-glow 3s ease-in-out 3}
-#share-panel #device-share::after{content:'';position:absolute;inset:-100% auto -100% -70%;width:35%;background:linear-gradient(90deg,transparent,#fff9,transparent);transform:rotate(25deg);pointer-events:none;animation:share-shine 5s ease-in-out 3}
 #share-panel .share-actions button:hover,#share-panel .share-actions a:hover{transform:translateY(-1px);border-color:#ffffff40;background-color:#ffffff0c}
 #share-panel .share-actions .share-quiet{min-height:32px;border:0;background:transparent;color:#93918b;font-size:11px}
 #share-panel a[aria-disabled=true]{opacity:.4;animation:none!important}
@@ -54,8 +52,6 @@ header nav{display:flex;align-items:center;gap:24px;font-size:12px}.about-link{c
 #share-panel #share-feedback{font-size:11px;line-height:1.5;color:#d6d0c0;margin:12px 0 0;text-align:center}
 #share-panel #share-feedback:empty{display:none}
 #share-panel :focus-visible{outline:2px solid #d0c3a4;outline-offset:3px}
-@keyframes share-glow{0%,100%{box-shadow:0 5px 18px #0004,0 0 0 #e7dfcc00}50%{box-shadow:0 5px 18px #0004,0 0 20px #e7dfcc20}}
-@keyframes share-shine{0%,60%{left:-70%}100%{left:150%}}
 @media(max-width:480px){#share-panel{padding:22px;border-radius:20px;max-height:calc(100dvh - 24px)}#share-panel h2{font-size:23px}}
 @media(prefers-reduced-motion:reduce){#share-panel *,#share-panel *::after{animation:none!important;transition:none!important}}
 
@@ -78,7 +74,7 @@ body.home-page>header,body.home-page>header *{color:#000!important;-webkit-text-
 .strip-arrow.prev-strip{left:12px}.strip-arrow.next-strip{right:12px}
 @media(max-width:650px){.strip-arrow{width:36px;height:36px}.strip-arrow.prev-strip{left:6px}.strip-arrow.next-strip{right:6px}}
 @media(prefers-reduced-motion:reduce){#upload-rail{scroll-behavior:auto}}
-</style><script defer src="/assets/blog-nav.js"></script><link rel="canonical" href="https://sarahwadmore.com/"><meta property="og:type" content="website"><meta property="og:title" content="Art by Sarah Wadmore"><meta property="og:description" content="Explore Sarah Wadmore’s artwork gallery and studio journal."><meta property="og:url" content="https://sarahwadmore.com/"><meta name="twitter:card" content="summary"><link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="alternate" type="application/rss+xml" title="Sarah Wadmore — Journal" href="/feed.xml"><script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"Art by Sarah Wadmore","url":"https://sarahwadmore.com/"}</script><script src="https://telegram.org/js/telegram-web-app.js"></script><script defer src="/assets/telegram-mini-app.js"></script><link rel="stylesheet" href="/assets/telegram-mini-app.css"><script defer src="/assets/radio.js"></script><link rel="stylesheet" href="/assets/radio.css?v=20261117-home-black-2"><script defer src="/assets/native-share.js"></script><link rel="stylesheet" href="/assets/gallery-experience.css"><link rel="stylesheet" href="/assets/home-slideshow.css?v=20261117-home-black-2"></head>
+</style><script defer src="/assets/blog-nav.js"></script><link rel="canonical" href="https://sarahwadmore.com/"><meta property="og:type" content="website"><meta property="og:title" content="Art by Sarah Wadmore"><meta property="og:description" content="Explore Sarah Wadmore’s artwork gallery and studio journal."><meta property="og:url" content="https://sarahwadmore.com/"><meta name="twitter:card" content="summary"><link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="alternate" type="application/rss+xml" title="Sarah Wadmore — Journal" href="/feed.xml"><script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"Art by Sarah Wadmore","url":"https://sarahwadmore.com/"}</script><script src="https://telegram.org/js/telegram-web-app.js"></script><script defer src="/assets/telegram-mini-app.js"></script><link rel="stylesheet" href="/assets/telegram-mini-app.css"><script defer src="/assets/radio.js"></script><link rel="stylesheet" href="/assets/radio.css?v=20261117-home-black-2"><link rel="stylesheet" href="/assets/gallery-experience.css"><link rel="stylesheet" href="/assets/home-slideshow.css?v=20261117-home-black-2"></head>
 <body class="home-page">
 <header><h1><small>Art by</small>Sarah Wadmore the Material Girl 🌼🌸🌺</h1><nav aria-label="Main navigation"><a class="about-link" href="/about/">ABOUT</a><details class="blog-menu"><summary>BLOG</summary><div data-blog-links><a href="/blog/">View all posts →</a></div></details></nav></header>
 <section id="home-hero" aria-label="Sarah Wadmore murals" data-slides='["/artworks/FEMALE%20STREET%20ARTIST%20SARAH%20PFLY%20FROM%20ENGLAND%20MURAL%2016A.jpg","/artworks/FEMALE%20STREET%20ARTIST%20SARAH%20PFLY%20FROM%20ENGLAND%20MURAL%201A.jpg","/artworks/FEMALE%20STREET%20ARTIST%20SARAH%20PFLY%20FROM%20ENGLAND%20MURAL%202A.jpg","/artworks/FEMALE%20STREET%20ARTIST%20SARAH%20WADMORE%20PFLY%20FROM%20ENGLAND%20MURAL%202.jpg"]'><button type="button" class="hero-open"><img src="/artworks/FEMALE%20STREET%20ARTIST%20SARAH%20PFLY%20FROM%20ENGLAND%20MURAL%2016A.jpg" alt="Street art mural by Sarah Wadmore (PFLY), England" width="1536" height="1024" fetchpriority="high" loading="eager" decoding="async"></button><div class="hero-controls" aria-label="Mural slideshow controls"><button type="button" class="hero-prev" aria-label="Previous mural">‹</button><span class="hero-count"></span><button type="button" class="hero-next" aria-label="Next mural">›</button><button type="button" class="hero-pause" aria-pressed="false">Pause</button></div></section><script src="/assets/home-slideshow.js"></script>
@@ -202,7 +198,7 @@ function clearArtworkURL(){const url=new URL(location.href);url.searchParams.del
 const sharePanel=document.createElement('dialog');
 sharePanel.id='share-panel';
 sharePanel.setAttribute('aria-labelledby','share-heading');
-sharePanel.innerHTML="<div class=\"share-head\"><div><p class=\"share-eyebrow\">ART BY SARAH WADMORE</p><h2 id=\"share-heading\">Art worth sharing.</h2></div><button id=\"dismiss-share\" aria-label=\"Back to artwork\">×</button></div><label for=\"share-platform\">Share to</label><select id=\"share-platform\"><option value=\"x\">X</option><option value=\"facebook\">Facebook</option><option value=\"instagram\">Instagram</option><option value=\"tiktok\">TikTok</option></select><label for=\"share-caption\">Your caption · make it yours</label><textarea id=\"share-caption\" rows=\"5\"></textarea><p id=\"share-count\"></p><div class=\"share-actions\"><button id=\"device-share\" disabled>Preparing artwork…</button><button id=\"copy-caption\">Copy caption</button><a class=\"share-quiet\" id=\"open-social\" target=\"_blank\" rel=\"noopener noreferrer\">Open platform</a><a class=\"share-quiet\" id=\"download-art\" download>↓ Save artwork</a></div><p class=\"share-trust\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" aria-hidden=\"true\"><rect x=\"5\" y=\"10\" width=\"14\" height=\"11\" rx=\"3\"/><path d=\"M8 10V7a4 4 0 0 1 8 0v3\"/></svg>You choose what to post. Sign in on your platform.</p><details class=\"share-info\"><summary>How sharing works</summary><p id=\"share-help\"></p></details><p id=\"share-feedback\" role=\"status\" aria-live=\"polite\"></p>";
+sharePanel.innerHTML="<div class=\"share-head\"><div><p class=\"share-eyebrow\">ART BY SARAH WADMORE</p><h2 id=\"share-heading\">Art worth sharing.</h2></div><button id=\"dismiss-share\" aria-label=\"Back to artwork\">×</button></div><label for=\"share-platform\">Share to</label><select id=\"share-platform\"><option value=\"x\">X</option><option value=\"facebook\">Facebook</option><option value=\"instagram\">Instagram</option><option value=\"tiktok\">TikTok</option></select><label for=\"share-caption\">Your caption · make it yours</label><textarea id=\"share-caption\" rows=\"5\"></textarea><p id=\"share-count\"></p><div class=\"share-actions\"><button id=\"copy-caption\">Copy caption</button><a class=\"share-quiet\" id=\"open-social\" target=\"_blank\" rel=\"noopener noreferrer\">Open platform</a><a class=\"share-quiet\" id=\"download-art\" download>↓ Save artwork</a></div><p class=\"share-trust\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" aria-hidden=\"true\"><rect x=\"5\" y=\"10\" width=\"14\" height=\"11\" rx=\"3\"/><path d=\"M8 10V7a4 4 0 0 1 8 0v3\"/></svg>You choose what to post. Sign in on your platform.</p><details class=\"share-info\"><summary>How sharing works</summary><p id=\"share-help\"></p></details><p id=\"share-feedback\" role=\"status\" aria-live=\"polite\"></p>";
 box.append(sharePanel);
 const platformSelect=sharePanel.querySelector('#share-platform'),captionInput=sharePanel.querySelector('#share-caption'),shareFeedback=sharePanel.querySelector('#share-feedback');
 let shareWork,shareURL;
@@ -244,8 +240,8 @@ function updateShareLink(){
 function selectSharePlatform(){
  captionInput.value=makeShareCaption(shareWork,platformSelect.value,shareURL);
  sharePanel.querySelector('#share-help').textContent=platformSelect.value==='x'?
- 'For an attached image, use Share artwork file and choose X in your device share menu if available. The X web link carries text and the artwork URL only. Check the post before publishing; the app may omit the caption.':
- 'For an attached file, use Share artwork file and choose your app in the device share menu if available. Direct website links cannot attach the file. If device sharing is unavailable, save the artwork and upload it manually; copy the caption separately. Check the post before publishing.';
+ 'The X web link opens with your caption and artwork URL. To attach the image itself, save the artwork and upload it in X. Check the post before publishing.':
+ 'Save the artwork and upload it on the selected platform. Copy the caption separately if you want to use it. Check the post before publishing.';
  shareFeedback.textContent='';updateShareLink();
 }
 platformSelect.onchange=selectSharePlatform;
@@ -260,32 +256,11 @@ sharePanel.addEventListener('close',()=>document.querySelector('#share').focus()
 sharePanel.addEventListener('keydown',event=>event.stopPropagation());
 sharePanel.addEventListener('touchstart',event=>event.stopPropagation(),{passive:true});
 sharePanel.addEventListener('touchend',event=>event.stopPropagation(),{passive:true});
-let fileShare=null;
-function prepareArtworkSharing(){
- const button=sharePanel.querySelector('#device-share');
- if(!window.createArtworkFileShare){button.disabled=true;button.textContent='Image sharing unavailable here';return}
- if(!fileShare){
- fileShare=window.createArtworkFileShare({
- getCaption:()=>captionInput.value,
- onMessage:message=>{shareFeedback.textContent=message},
- onState:(state,work)=>{
- button.disabled=state!=='ready';button.setAttribute('aria-busy',String(state==='loading'));
- button.textContent=state==='loading'?'Preparing artwork…':state==='ready'?(isVideo(work)?'Share video file + caption ↗':'Share artwork file + caption ↗'):'Image sharing unavailable here';
- }
- });
- }
- fileShare.prepare(shareWork,location.href);
-}
-sharePanel.querySelector('#device-share').onclick=()=>{
- if(fileShare){fileShare.share();return}
- shareFeedback.textContent='This browser cannot share the artwork file. Use Save artwork and Copy caption.';
-};
-sharePanel.addEventListener('close',()=>fileShare?.cancel());
 document.querySelector('#share').onclick=()=>{
  shareWork=works[current];if(!shareWork)return;
  const url=new URL('/',location.origin);if(/^\d+$/.test(shareWork.uploadId||''))url.pathname='/art/'+shareWork.uploadId+'/';else url.searchParams.set('art',artworkKey(shareWork));shareURL=url.href;
  const download=sharePanel.querySelector('#download-art');download.href=new URL(shareWork.src,location.href).href;
- download.download=shareWork.src.split('/').pop();selectSharePlatform();sharePanel.querySelector('.share-info').open=false;sharePanel.showModal();sharePanel.scrollTop=0;prepareArtworkSharing();
+ download.download=shareWork.src.split('/').pop();selectSharePlatform();sharePanel.querySelector('.share-info').open=false;sharePanel.showModal();sharePanel.scrollTop=0;
 };
 full.addEventListener('load',()=>{mediaStatus.textContent=''});
 full.addEventListener('error',()=>{if(!full.hidden)mediaStatus.textContent='This artwork could not load. Try the next artwork or reload the page.'});
